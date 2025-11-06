@@ -1,7 +1,7 @@
 package com.z.c.woodexcess_api.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.z.c.woodexcess_api.dto.UserRegisterDTO;
+import com.z.c.woodexcess_api.dto.auth.RegisterRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -24,7 +24,7 @@ public class UserRegistrationIntegrationTest {
 
     @Test
     void shouldRegisterUserSuccessfully() throws Exception {
-        UserRegisterDTO dto = new UserRegisterDTO("Joao", "joao@mail.com", "123456");
+        RegisterRequest dto = new RegisterRequest("Joao", "joao@mail.com", "123456");
         mockMvc.perform(post("/api/users/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(dto))
@@ -38,7 +38,7 @@ public class UserRegistrationIntegrationTest {
 
     @Test
     void shouldFailToRegisterWithDuplicateEmail() throws Exception {
-        UserRegisterDTO dto = new UserRegisterDTO("Joao", "duplicate@mail.com", "123456");
+        RegisterRequest dto = new RegisterRequest("Joao", "duplicate@mail.com", "123456");
 
         mockMvc.perform(post("/api/users/register")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -56,7 +56,7 @@ public class UserRegistrationIntegrationTest {
 
     @Test
     void shouldFailWithInvalidPayload() throws Exception {
-        UserRegisterDTO dto = new UserRegisterDTO("", "invalidemail", "123");
+        RegisterRequest dto = new RegisterRequest("", "invalidemail", "123");
         mockMvc.perform(post("/api/users/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(dto))

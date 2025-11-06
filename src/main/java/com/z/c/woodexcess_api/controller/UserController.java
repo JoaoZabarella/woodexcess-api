@@ -1,6 +1,6 @@
 package com.z.c.woodexcess_api.controller;
 
-import com.z.c.woodexcess_api.dto.UserRegisterDTO;
+import com.z.c.woodexcess_api.dto.auth.RegisterRequest;
 import com.z.c.woodexcess_api.dto.UserResponseDTO;
 import com.z.c.woodexcess_api.service.UserService;
 import jakarta.validation.Valid;
@@ -19,7 +19,7 @@ public class UserController {
     private UserService service;
 
     @PostMapping("/register")
-    public ResponseEntity<UserResponseDTO> toResponse(@Valid @RequestBody UserRegisterDTO user) throws IllegalAccessException {
+    public ResponseEntity<UserResponseDTO> register(@Valid @RequestBody RegisterRequest user) throws IllegalAccessException {
         UserResponseDTO response = service.registerUser(user);
         return ResponseEntity.ok(response);
     }

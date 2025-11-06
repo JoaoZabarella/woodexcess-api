@@ -1,12 +1,13 @@
 package com.z.c.woodexcess_api.service;
 
-import com.z.c.woodexcess_api.dto.UserRegisterDTO;
+import com.z.c.woodexcess_api.dto.auth.RegisterRequest;
 import com.z.c.woodexcess_api.dto.UserResponseDTO;
-import com.z.c.woodexcess_api.exception.users.EmailAlredyExist;
+import com.z.c.woodexcess_api.exception.users.EmailAlredyExistException;
 import com.z.c.woodexcess_api.mapper.UserMapper;
 import com.z.c.woodexcess_api.model.User;
 import com.z.c.woodexcess_api.repository.UserRepository;
 import com.z.c.woodexcess_api.role.UserRole;
+import com.z.c.woodexcess_api.security.JwtProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,10 +20,12 @@ public class UserService {
     private UserRepository repository;
     @Autowired
     private PasswordEncoder encoder;
+    @Autowired
+    private JwtProvider jwt;
 
-    public UserResponseDTO registerUser(UserRegisterDTO dto) throws IllegalAccessException {
+    public UserResponseDTO registerUser(RegisterRequest dto) throws IllegalAccessException {
         if(repository.findByEmail(dto.email()).isPresent()){
-            throw new EmailAlredyExist("Email already exists");
+            throw new EmailAlredyExistException("Email already exists");
         }
 
         User user = new User();
@@ -35,4 +38,8 @@ public class UserService {
         return UserMapper.toResponse(savedUser);
 
     }
+
+
+
+
 }

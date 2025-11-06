@@ -1,7 +1,7 @@
 package com.z.c.woodexcess_api.service;
 
-import com.z.c.woodexcess_api.dto.UserRegisterDTO;
-import com.z.c.woodexcess_api.exception.users.EmailAlredyExist;
+import com.z.c.woodexcess_api.dto.auth.RegisterRequest;
+import com.z.c.woodexcess_api.exception.users.EmailAlredyExistException;
 import com.z.c.woodexcess_api.model.User;
 import com.z.c.woodexcess_api.repository.UserRepository;
 import com.z.c.woodexcess_api.role.UserRole;
@@ -44,7 +44,7 @@ class UserServiceTest {
     @Test
     void shouldRegisterNewUser() throws IllegalAccessException {
 
-        UserRegisterDTO dto = new UserRegisterDTO("John", "john@mail.com", "123456");
+        RegisterRequest dto = new RegisterRequest("John", "john@mail.com", "123456");
         when(repository.findByEmail("john@mail.com")).thenReturn(Optional.empty());
         when(encoder.encode("123456")).thenReturn("hashed");
 
@@ -61,10 +61,10 @@ class UserServiceTest {
 
     @Test
     void shouldThrowExceptionWhenEmailAlreadyExist() throws IllegalAccessException {
-        UserRegisterDTO dto = new UserRegisterDTO("John", "john@mail.com", "123456");
+        RegisterRequest dto = new RegisterRequest("John", "john@mail.com", "123456");
         when(repository.findByEmail("john@mail.com")).thenReturn(Optional.of(new User()));
 
-        Exception ex = assertThrows(EmailAlredyExist.class, () -> service.registerUser(dto));
+        Exception ex = assertThrows(EmailAlredyExistException.class, () -> service.registerUser(dto));
         assertEquals("Email already exists", ex.getMessage());
     }
 }
