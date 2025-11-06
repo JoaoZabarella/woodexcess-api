@@ -7,6 +7,7 @@ import com.z.c.woodexcess_api.mapper.UserMapper;
 import com.z.c.woodexcess_api.model.User;
 import com.z.c.woodexcess_api.repository.UserRepository;
 import com.z.c.woodexcess_api.role.UserRole;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -14,8 +15,9 @@ import org.springframework.stereotype.Service;
 
 public class UserService {
 
-
+    @Autowired
     private UserRepository repository;
+    @Autowired
     private PasswordEncoder encoder;
 
     public UserResponseDTO registerUser(UserRegisterDTO dto) throws IllegalAccessException {
