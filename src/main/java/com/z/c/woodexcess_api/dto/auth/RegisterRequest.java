@@ -1,11 +1,10 @@
-package com.z.c.woodexcess_api.dto;
+package com.z.c.woodexcess_api.dto.auth;
 
-import com.z.c.woodexcess_api.role.UserRole;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-public record UserRegisterDTO (
+public record RegisterRequest(
 
         @NotBlank(message = "Name is required")
         String name,
