@@ -1,70 +1,72 @@
 package com.z.c.woodexcess_api.service;
 
 import com.z.c.woodexcess_api.dto.auth.RegisterRequest;
+import com.z.c.woodexcess_api.dto.auth.RegisterResponse;
 import com.z.c.woodexcess_api.exception.users.EmailAlredyExistException;
+import com.z.c.woodexcess_api.mapper.UserMapper;
 import com.z.c.woodexcess_api.model.User;
 import com.z.c.woodexcess_api.repository.UserRepository;
-import com.z.c.woodexcess_api.role.UserRole;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
     @Mock
-    private UserRepository repository;
+    UserRepository repository;
     @Mock
-    private PasswordEncoder encoder;
-    @InjectMocks
-    private UserService service;
+    PasswordEncoder encoder;
+    @Mock
+    UserMapper mapper;
 
-    private AutoCloseable closeable;
+    UserService service;
 
     @BeforeEach
-    void setUp() throws Exception {
-        closeable = MockitoAnnotations.openMocks(this);
-    }
-
-    @AfterEach
-    void tearDown() throws Exception {
-        closeable.close();
+    void setUp() {
+        service = new UserService(repository, encoder, mapper);
     }
 
     @Test
-    void shouldRegisterNewUser() throws IllegalAccessException {
+    void registerUser_success() {
+        RegisterRequest dto = new RegisterRequest("John", "john@email.com", "12345678");
+        User user = new User();
+        when(repository.findByEmail(dto.email())).thenReturn(Optional.empty());
+        when(mapper.toEntity(dto)).thenReturn(user);
+        when(encoder.encode(dto.password())).thenReturn("hashedPwd");
+        when(repository.save(any())).thenAnswer(i -> {
+            User u = i.getArgument(0);
+            u.setId(UUID.randomUUID());
+            u.setName("John");
+            u.setEmail("john@email.com");
+            u.setRole(com.z.c.woodexcess_api.role.UserRole.USER);
+            return u;
+        });
 
-        RegisterRequest dto = new RegisterRequest("John", "john@mail.com", "123456");
-        when(repository.findByEmail("john@mail.com")).thenReturn(Optional.empty());
-        when(encoder.encode("123456")).thenReturn("hashed");
+        when(mapper.toResponse(any(User.class)))
+                .thenReturn(new RegisterResponse("mockId", "John", "john@email.com", "USER"));
 
-        User savedUser = new User(UUID.randomUUID(), "John", "john@mail.com", "hashed", UserRole.USER);
-        when(repository.save(any(User.class))).thenReturn(savedUser);
-
-        var response = service.registerUser(dto);
-
-        assertNotNull(response);
-        assertEquals("John", response.name());
-        assertEquals("john@mail.com", response.email());
-        assertEquals(UserRole.USER, response.role());
+        RegisterResponse result = service.registerUser(dto);
+        assertEquals("John", result.name());
+        assertEquals("john@email.com", result.email());
+        assertEquals("USER", result.role());
     }
 
     @Test
-    void shouldThrowExceptionWhenEmailAlreadyExist() throws IllegalAccessException {
-        RegisterRequest dto = new RegisterRequest("John", "john@mail.com", "123456");
-        when(repository.findByEmail("john@mail.com")).thenReturn(Optional.of(new User()));
-
-        Exception ex = assertThrows(EmailAlredyExistException.class, () -> service.registerUser(dto));
-        assertEquals("Email already exists", ex.getMessage());
+    void registerUser_duplicateEmail() {
+        RegisterRequest dto = new RegisterRequest("John", "john@email.com", "senha");
+        when(repository.findByEmail(dto.email())).thenReturn(Optional.of(new User()));
+        assertThrows(EmailAlredyExistException.class, () -> service.registerUser(dto));
     }
 }

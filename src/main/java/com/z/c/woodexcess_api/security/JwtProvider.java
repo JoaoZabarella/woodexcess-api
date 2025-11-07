@@ -17,6 +17,7 @@ public class JwtProvider {
     private final long jwtExpiration = 86400000;
 
     public String generateJwtToken(User user) {
+
         return Jwts.builder()
                 .setSubject(user.getEmail())
                 .claim("role", user.getRole().toString())

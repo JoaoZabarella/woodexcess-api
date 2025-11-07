@@ -14,54 +14,52 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-public class UserRegistrationIntegrationTest {
+public class UserControllerIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @Autowired
-    private ObjectMapper mapper;
+    private ObjectMapper objectMapper;
 
     @Test
     void shouldRegisterUserSuccessfully() throws Exception {
-        RegisterRequest dto = new RegisterRequest("Joao", "joao@mail.com", "123456");
+        RegisterRequest request = new RegisterRequest("John", "john@mail.com", "123456");
         mockMvc.perform(post("/api/users/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(dto))
+                        .content(objectMapper.writeValueAsString(request))
                 )
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("Joao"))
-                .andExpect(jsonPath("$.email").value("joao@mail.com"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.name").value("John"))
+                .andExpect(jsonPath("$.email").value("john@mail.com"))
                 .andExpect(jsonPath("$.role").value("USER"));
     }
 
-
     @Test
     void shouldFailToRegisterWithDuplicateEmail() throws Exception {
-        RegisterRequest dto = new RegisterRequest("Joao", "duplicate@mail.com", "123456");
+        RegisterRequest request = new RegisterRequest("John", "duplicate@mail.com", "123456");
 
         mockMvc.perform(post("/api/users/register")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(mapper.writeValueAsString(dto))
-        ).andExpect(status().isOk());
+                .content(objectMapper.writeValueAsString(request))
+        ).andExpect(status().isCreated());
 
 
         mockMvc.perform(post("/api/users/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(dto))
+                        .content(objectMapper.writeValueAsString(request))
                 )
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isConflict())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Email")));
     }
 
     @Test
     void shouldFailWithInvalidPayload() throws Exception {
-        RegisterRequest dto = new RegisterRequest("", "invalidemail", "123");
+        RegisterRequest request = new RegisterRequest("", "invalidemail", "123");
         mockMvc.perform(post("/api/users/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(dto))
+                        .content(objectMapper.writeValueAsString(request))
                 )
                 .andExpect(status().isBadRequest());
     }
 }
-

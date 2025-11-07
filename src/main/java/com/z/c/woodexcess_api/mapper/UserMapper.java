@@ -1,15 +1,30 @@
 package com.z.c.woodexcess_api.mapper;
 
-import com.z.c.woodexcess_api.dto.UserResponseDTO;
+import com.z.c.woodexcess_api.dto.auth.RegisterRequest;
+import com.z.c.woodexcess_api.dto.auth.RegisterResponse;
 import com.z.c.woodexcess_api.model.User;
+import com.z.c.woodexcess_api.role.UserRole;
+import org.springframework.stereotype.Component;
 
+@Component
 public class UserMapper {
-    public static UserResponseDTO toResponse(User user){
-        return new UserResponseDTO(
-                user.getId(),
+    public User toEntity(RegisterRequest dto) {
+        return new User(
+                null,
+                dto.name(),
+                dto.email(),
+                null,
+                UserRole.USER
+        );
+    }
+
+    public RegisterResponse toResponse(User user) {
+        return new RegisterResponse(
+                user.getId().toString(),
                 user.getName(),
                 user.getEmail(),
-                user.getRole()
+                user.getRole().toString()
         );
     }
 }
+
