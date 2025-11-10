@@ -1,9 +1,11 @@
 package com.z.c.woodexcess_api.dto.auth;
 
-public record LoginResponse(
-        String token
+import com.z.c.woodexcess_api.role.UserRole;
 
-) {
-    public LoginResponse(String token) {
-        this.token = token; }
-}
+public record LoginResponse(
+        String token,
+        String name,
+        String email,
+        UserRole role
+
+){}

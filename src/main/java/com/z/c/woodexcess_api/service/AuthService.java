@@ -1,6 +1,5 @@
 package com.z.c.woodexcess_api.service;
 
-import com.z.c.woodexcess_api.exception.users.EmailAlredyExistException;
 import com.z.c.woodexcess_api.exception.users.PasswordIncorrectException;
 import com.z.c.woodexcess_api.repository.UserRepository;
 import com.z.c.woodexcess_api.security.JwtProvider;
@@ -27,7 +26,5 @@ public class AuthService {
         }
         return provider.generateJwtToken(user);
     }
-
-
-
 }
+

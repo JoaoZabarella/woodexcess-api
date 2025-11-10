@@ -2,12 +2,22 @@ package com.z.c.woodexcess_api.service;
 
 import com.z.c.woodexcess_api.dto.auth.RegisterRequest;
 import com.z.c.woodexcess_api.dto.auth.RegisterResponse;
+import com.z.c.woodexcess_api.dto.user.ChangePasswordRequest;
+import com.z.c.woodexcess_api.dto.user.UpdateUserRequest;
+import com.z.c.woodexcess_api.dto.user.UserResponse;
 import com.z.c.woodexcess_api.exception.users.EmailAlredyExistException;
+import com.z.c.woodexcess_api.exception.users.PasswordIncorrectException;
 import com.z.c.woodexcess_api.mapper.UserMapper;
 import com.z.c.woodexcess_api.model.User;
 import com.z.c.woodexcess_api.repository.UserRepository;
+import jakarta.persistence.EntityExistsException;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class UserService {
@@ -22,6 +32,9 @@ public class UserService {
         this.mapper = mapper;
     }
 
+    //POST
+    //Register User
+    @Transactional
     public RegisterResponse registerUser(RegisterRequest dto) {
         if (repository.findByEmail(dto.email()).isPresent()) {
             throw new EmailAlredyExistException("Email already exists");
@@ -29,6 +42,44 @@ public class UserService {
         User user = mapper.toEntity(dto);
         user.setPassword(encoder.encode(dto.password()));
         User savedUser = repository.save(user);
-        return mapper.toResponse(savedUser);
+        return mapper.toRegisterResponse(savedUser);
     }
+
+
+    //GET
+    //Location User with ID
+    public Optional<UserResponse> getUserByID(UUID id){
+        return repository.findById(id)
+                .map(mapper::toUserResponse);
+    }
+
+    //PATH
+    public UserResponse updateUser(UUID id, UpdateUserRequest dto){
+        var user = repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+        if(!user.getEmail().equals(dto.email())){
+            if(repository.findByEmail(dto.email()).isPresent()){
+                throw new EmailAlredyExistException("Email already exists");
+            }
+            user.setEmail(dto.email());
+        }
+        user.setName(dto.name());
+
+        var updateUser = repository.save(user);
+        return mapper.toUserResponse(updateUser);
+    }
+
+    public void changePassword(UUID id, ChangePasswordRequest dto){
+        var user = repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        if(!encoder.matches(dto.currentPassword(), user.getPassword())){
+            throw new PasswordIncorrectException("Invalid current password");
+        }
+
+        user.setPassword(encoder.encode(dto.newPassword()));
+        repository.save(user);
+    }
+
+
 }
