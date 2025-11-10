@@ -6,6 +6,7 @@ import com.z.c.woodexcess_api.exception.users.EmailAlredyExistException;
 import com.z.c.woodexcess_api.mapper.UserMapper;
 import com.z.c.woodexcess_api.model.User;
 import com.z.c.woodexcess_api.repository.UserRepository;
+import com.z.c.woodexcess_api.role.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -54,13 +55,13 @@ class UserServiceTest {
             return u;
         });
 
-        when(mapper.toResponse(any(User.class)))
-                .thenReturn(new RegisterResponse("mockId", "John", "john@email.com", "USER"));
+        when(mapper.toRegisterResponse(any(User.class)))
+                .thenReturn(new RegisterResponse("mockId", "John", "john@email.com", UserRole.USER));
 
         RegisterResponse result = service.registerUser(dto);
         assertEquals("John", result.name());
         assertEquals("john@email.com", result.email());
-        assertEquals("USER", result.role());
+        assertEquals(UserRole.USER, result.role());
     }
 
     @Test
