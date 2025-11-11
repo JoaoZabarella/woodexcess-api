@@ -9,6 +9,8 @@ import com.z.c.woodexcess_api.security.CustomUserDetails;
 import com.z.c.woodexcess_api.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -27,10 +29,11 @@ public class UserController extends BaseController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest user) throws IllegalAccessException {
+    public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest user) {
         var response = service.registerUser(user);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
 
     @GetMapping("/me")
     public ResponseEntity<UserResponse> getMe(@AuthenticationPrincipal CustomUserDetails details) throws IllegalAccessException {
@@ -49,5 +52,11 @@ public class UserController extends BaseController {
     public ResponseEntity<Void> changePassword(@AuthenticationPrincipal CustomUserDetails details, @Valid ChangePasswordRequest request){
         service.changePassword(details.getId(), request);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<Page<UserResponse>> getAllUsers(@AuthenticationPrincipal CustomUserDetails details, Pageable pageable){
+        var response = service.getAllUsers(pageable);
+        return ResponseEntity.ok(response);
     }
 }

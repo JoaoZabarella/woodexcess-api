@@ -9,13 +9,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
-public class CustomUserDetails implements UserDetails {
-
-    private final User user;
-
-    public CustomUserDetails(User user) {
-        this.user = user;
-    }
+public record CustomUserDetails(User user) implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -58,7 +52,4 @@ public class CustomUserDetails implements UserDetails {
     }
 
 
-    public User getUser() {
-        return user;
-    }
 }

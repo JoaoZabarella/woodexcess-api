@@ -10,9 +10,10 @@ import com.z.c.woodexcess_api.exception.users.PasswordIncorrectException;
 import com.z.c.woodexcess_api.mapper.UserMapper;
 import com.z.c.woodexcess_api.model.User;
 import com.z.c.woodexcess_api.repository.UserRepository;
-import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -32,8 +33,6 @@ public class UserService {
         this.mapper = mapper;
     }
 
-    //POST
-    //Register User
     @Transactional
     public RegisterResponse registerUser(RegisterRequest dto) {
         if (repository.findByEmail(dto.email()).isPresent()) {
@@ -45,15 +44,11 @@ public class UserService {
         return mapper.toRegisterResponse(savedUser);
     }
 
-
-    //GET
-    //Location User with ID
     public Optional<UserResponse> getUserByID(UUID id){
         return repository.findById(id)
                 .map(mapper::toUserResponse);
     }
 
-    //PATH
     public UserResponse updateUser(UUID id, UpdateUserRequest dto){
         var user = repository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
@@ -64,7 +59,6 @@ public class UserService {
             user.setEmail(dto.email());
         }
         user.setName(dto.name());
-
         var updateUser = repository.save(user);
         return mapper.toUserResponse(updateUser);
     }
@@ -72,14 +66,20 @@ public class UserService {
     public void changePassword(UUID id, ChangePasswordRequest dto){
         var user = repository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
-
         if(!encoder.matches(dto.currentPassword(), user.getPassword())){
             throw new PasswordIncorrectException("Invalid current password");
         }
-
         user.setPassword(encoder.encode(dto.newPassword()));
         repository.save(user);
     }
 
+    public Page<UserResponse> getAllUsers(Pageable pageable){
+        return repository.findAll(pageable).map(mapper::toUserResponse);
+    }
 
+    public void deactivateUser(UUID id) {
+        var user = repository.findById(id).orElseThrow(() -> new EntityNotFoundException("User not found"));
+        user.setActive(false);
+        repository.save(user);
+    }
 }
