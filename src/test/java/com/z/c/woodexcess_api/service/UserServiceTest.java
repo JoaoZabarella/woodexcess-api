@@ -1,9 +1,10 @@
 package com.z.c.woodexcess_api.service;
 
+import com.z.c.woodexcess_api.dto.address.AddressRequest;
 import com.z.c.woodexcess_api.dto.auth.RegisterRequest;
 import com.z.c.woodexcess_api.dto.auth.RegisterResponse;
-import com.z.c.woodexcess_api.exception.users.EmailAlredyExistException;
 import com.z.c.woodexcess_api.mapper.UserMapper;
+import com.z.c.woodexcess_api.model.Address;
 import com.z.c.woodexcess_api.model.User;
 import com.z.c.woodexcess_api.repository.UserRepository;
 import com.z.c.woodexcess_api.role.UserRole;
@@ -14,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -40,8 +42,9 @@ class UserServiceTest {
     }
 
     @Test
-    void registerUser_success() {
-        RegisterRequest dto = new RegisterRequest("John", "john@email.com", "12345678");
+    void registerUser_withAddress_success() {
+        AddressRequest address = new AddressRequest("Rua 1", "100", "", "Centro", "Cidade", "Estado", "12345-678", "Brasil");
+        RegisterRequest dto = new RegisterRequest("John", "john@email.com", "12345678", "12345678", List.of(address));
         User user = new User();
         when(repository.findByEmail(dto.email())).thenReturn(Optional.empty());
         when(mapper.toEntity(dto)).thenReturn(user);
@@ -49,14 +52,11 @@ class UserServiceTest {
         when(repository.save(any())).thenAnswer(i -> {
             User u = i.getArgument(0);
             u.setId(UUID.randomUUID());
-            u.setName("John");
-            u.setEmail("john@email.com");
-            u.setRole(com.z.c.woodexcess_api.role.UserRole.USER);
+            u.setAddresses(List.of(new Address(/*...*/)));
             return u;
         });
-
         when(mapper.toRegisterResponse(any(User.class)))
-                .thenReturn(new RegisterResponse("mockId", "John", "john@email.com", UserRole.USER));
+                .thenReturn(new RegisterResponse("mockId", "John", "john@email.com", "12345678", true, UserRole.USER));
 
         RegisterResponse result = service.registerUser(dto);
         assertEquals("John", result.name());
@@ -65,9 +65,11 @@ class UserServiceTest {
     }
 
     @Test
-    void registerUser_duplicateEmail() {
-        RegisterRequest dto = new RegisterRequest("John", "john@email.com", "senha");
-        when(repository.findByEmail(dto.email())).thenReturn(Optional.of(new User()));
-        assertThrows(EmailAlredyExistException.class, () -> service.registerUser(dto));
+    void registerUser_withInvalidAddress() {
+        AddressRequest address = new AddressRequest("", "", "", "", "", "", "", "");
+        RegisterRequest dto = new RegisterRequest("John", "john@email.com", "12345678", "12345678", List.of(address));
+        when(repository.findByEmail(dto.email())).thenReturn(Optional.empty());
+        when(mapper.toEntity(dto)).thenThrow(new IllegalArgumentException("Invalid address"));
+        assertThrows(IllegalArgumentException.class, () -> service.registerUser(dto));
     }
 }

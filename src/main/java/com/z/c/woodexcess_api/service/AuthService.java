@@ -28,8 +28,11 @@ public class AuthService {
         if (!encoder.matches(password, user.getPassword())) {
             throw new PasswordIncorrectException("Invalid credentials");
         }
+        if(!user.getActive()){
+            throw new PasswordIncorrectException("Invalid credentials");
+        }
         String token = provider.generateJwtToken(user);
-        return new LoginResponse(token, user.getName(), user.getEmail(),  user.getRole());
+        return new LoginResponse(token, user.getName(), user.getEmail(),  user.getPhone(), user.getActive(), user.getRole());
     }
 }
 
