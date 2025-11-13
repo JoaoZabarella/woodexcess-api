@@ -3,11 +3,13 @@ package com.z.c.woodexcess_api.dto.auth;
 import com.z.c.woodexcess_api.role.UserRole;
 
 public record LoginResponse(
-        String token,
-        String name,
-        String email,
-        String phone,
-        Boolean active,
-        UserRole role
+        String accessToken,
+        String refreshToken,
+        String tokenType,
+        Long expiresIn
 
-){}
+){
+    public LoginResponse(String accessToken, String refreshToken, Long expiresIn){
+        this(accessToken, refreshToken, "Bearer", expiresIn);
+    }
+}

@@ -2,10 +2,7 @@ package com.z.c.woodexcess_api.model;
 
 import com.z.c.woodexcess_api.role.UserRole;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -18,6 +15,7 @@ import java.util.UUID;
 @Entity(name = "user")
 @Table(name = "users")
 @Setter
+@Builder
 public class User {
 
     @Id
@@ -29,7 +27,7 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(nullable = false)
+    @Column(name = "password_hash", nullable = false)
     private String password;
 
     @Enumerated(EnumType.STRING)
@@ -51,12 +49,14 @@ public class User {
 
     @PrePersist
     public void prePersist() {
-        this.createdAt = LocalDateTime.now();
-        this.active = true;
+        if(createdAt == null) createdAt = LocalDateTime.now();
+        if(updatedAt == null) updatedAt = LocalDateTime.now();
     }
 
     @PreUpdate
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
+
+
 }
