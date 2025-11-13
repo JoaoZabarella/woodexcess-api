@@ -1,5 +1,6 @@
 package com.z.c.woodexcess_api.service;
 
+import com.z.c.woodexcess_api.dto.auth.TokenRotationResult;
 import com.z.c.woodexcess_api.exception.auth.RefreshTokenException;
 import com.z.c.woodexcess_api.exception.auth.TokenReuseDetectedException;
 import com.z.c.woodexcess_api.model.RefreshToken;
@@ -72,55 +73,50 @@ public class RefreshTokenService {
     }
 
     @Transactional
-    public RefreshToken validateAndRotate(String token, HttpServletRequest request) {
+    public TokenRotationResult validateAndRotate(String token, HttpServletRequest request) {
+        // Gera hash SHA-256 do token para buscar no banco
         String tokenHash = hashToken(token);
 
+        // Busca token no banco pelo hash
         RefreshToken currentToken = repository.findByTokenHash(tokenHash)
                 .orElseThrow(() -> new RefreshTokenException("Invalid refresh token"));
 
-        // ✅ Detecção de reuso: Se token já foi substituído, possível ataque
+        // Detecção de reuso: se token já foi substituído, possível ataque
         if (reuseDetectionEnabled && currentToken.getReplacedByToken() != null) {
-            logger.warn("Token reuse detected for user: {}. Revoking all tokens.",
-                    currentToken.getUser().getEmail());
             revokeAllUserTokens(currentToken.getUser().getId());
             throw new TokenReuseDetectedException("Token reuse detected. All sessions revoked.");
         }
 
-        // Validar expiração
+        // Valida se o token não expirou
         if (currentToken.isExpired()) {
             throw new RefreshTokenException("Refresh token has expired");
         }
 
-        // Validar revogação
+        // Valida se o token não foi revogado manualmente
         if (currentToken.getRevoked()) {
             throw new RefreshTokenException("Refresh token has been revoked");
         }
 
-        // ✅ Validação de contexto (IP + User-Agent)
+        // Valida contexto (IP + User-Agent) para detectar mudança de dispositivo
         if (validateContext) {
             String currentUserAgent = request.getHeader("User-Agent");
             String currentIp = getClientIp(request);
-
             if (!currentToken.matchesContext(currentUserAgent, currentIp)) {
-                logger.warn("Context mismatch for token. User: {}, Original IP: {}, Current IP: {}",
-                        currentToken.getUser().getEmail(),
-                        currentToken.getIpAddress(),
-                        currentIp);
                 throw new RefreshTokenException("Token context mismatch. Please login again.");
             }
         }
 
-        // ✅ Token Rotation: Criar novo token e revogar o atual
+        // Token Rotation: cria novo token e revoga o atual
         if (rotationEnabled) {
+            // Gera novo token raw (UUID)
             String newToken = jwtProvider.generateRefreshToken();
             String newTokenHash = hashToken(newToken);
-
-            // Marcar token atual como substituído
+            // Marca token atual como substituído e revogado
             currentToken.setReplacedByToken(newTokenHash);
             currentToken.setRevoked(true);
             currentToken.setLastUsedAt(LocalDateTime.now());
 
-            // Criar novo token
+            // Cria novo token no banco com o hash
             RefreshToken newRefreshToken = RefreshToken.builder()
                     .user(currentToken.getUser())
                     .tokenHash(newTokenHash)
@@ -129,25 +125,32 @@ public class RefreshTokenService {
                     .expiresAt(LocalDateTime.now().plusSeconds(jwtProvider.getRefreshTokenExpiration() / 1000))
                     .build();
 
+            // Salva ambos os tokens no banco
             repository.save(currentToken);
             repository.save(newRefreshToken);
 
-            logger.info("Token rotated for user: {}", currentToken.getUser().getEmail());
-
-            // Retornar novo token (não o hash)
-            newRefreshToken.setTokenHash(newToken); // Usar setTokenHash temporariamente para transporte
-            return newRefreshToken;
+            // Retorna DTO com token raw (para o cliente) e hash separados
+            return TokenRotationResult.builder()
+                    .rawToken(newToken)        // Token UUID original (enviar ao cliente)
+                    .tokenHash(newTokenHash)   // Hash SHA-256 (já no banco)
+                    .userId(currentToken.getUser().getId())
+                    .build();
         }
 
-        // Se rotação desabilitada, apenas atualizar last_used_at
+        // Se rotação desabilitada, apenas atualiza last_used_at
         currentToken.setLastUsedAt(LocalDateTime.now());
         repository.save(currentToken);
 
-        return currentToken;
+        // Retorna token original sem rotacionar
+        return TokenRotationResult.builder()
+                .rawToken(token) // Token original enviado pelo cliente
+                .tokenHash(tokenHash)
+                .userId(currentToken.getUser().getId())
+                .build();
     }
 
     /**
-     * ✅ IMPLEMENTADO: Limite de dispositivos
+     * ✅ Limite de dispositivos
      */
     private void enforceDeviceLimit(UUID userId) {
         long activeTokens = repository.countActiveTokensByUserId(userId, LocalDateTime.now());
@@ -212,9 +215,11 @@ public class RefreshTokenService {
             ip = request.getRemoteAddr();
         }
 
+        // Handle proxy chains
         if (ip != null && ip.contains(",")) {
-            ip = ip.split(",")[0].trim();
+            ip = ip.split(",").toString().trim();
         }
-        return ip;
+
+        return ip != null ? ip : "unknown";  // Nunca retornar null
     }
 }

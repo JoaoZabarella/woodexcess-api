@@ -26,7 +26,7 @@ public class JwtProvider {
     @PostConstruct
     public void validateSecret(){
         if(jwtSecret == null || jwtSecret.getBytes().length < 64){
-            throw new IllegalStateException("JWT secret is null or length exceed 64");
+            throw new IllegalStateException("JWT secret must be at least 512 bits (64 bytes) for HS512");
         }
     }
 

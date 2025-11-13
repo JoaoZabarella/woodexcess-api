@@ -1,11 +1,11 @@
 package com.z.c.woodexcess_api.service;
 
 import com.z.c.woodexcess_api.dto.auth.LoginResponse;
-import com.z.c.woodexcess_api.exception.users.PasswordIncorrectException;
-import com.z.c.woodexcess_api.model.RefreshToken;
+import com.z.c.woodexcess_api.dto.auth.TokenRotationResult;
 import com.z.c.woodexcess_api.repository.UserRepository;
 import com.z.c.woodexcess_api.security.JwtProvider;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -46,18 +46,23 @@ public class AuthService {
     }
 
     public LoginResponse refreshAccessToken(String refreshToken, HttpServletRequest request) {
-        RefreshToken rotatedToken = refreshTokenService.validateAndRotate(refreshToken, request);
+        // Recebe DTO com token RAW separado do hash
+        TokenRotationResult result = refreshTokenService.validateAndRotate(refreshToken, request);
 
+        // Buscar usuário pelo ID (mais eficiente)
+        var user = repository.findById(result.getUserId())
+                .orElseThrow(() -> new BadCredentialsException("User not found"));
 
-        var user = rotatedToken.getUser();
+        // Gerar novo access token
         String newAccessToken = provider.generateJwtToken(user);
 
-        //Return new refresh token if you have rotation
-        String newRefreshToken = rotatedToken.getTokenHash();
+        // Retornar token RAW (não o hash)
+        String newRefreshToken = result.getRawToken();
 
         return new LoginResponse(newAccessToken, newRefreshToken, accessTokenExpiration);
     }
 
+    @Transactional
     public void logout (String refreshToken){
         refreshTokenService.revokeToken(refreshToken);
     }
