@@ -1,4 +1,25 @@
-name: security.yml
+name: Security Scan
 on:
-
+  push:
+    branches: [ main ]
+  schedule:
+    - cron: '0 0 * * 1' # Definido para toda segunda-feira
 jobs:
+  dependency-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'woodexcess-api'
+          path: '.'
+          format: 'HTML'
+
+      - name: Trivy vulnerabillity scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          saverity: 'CRITICAL,HIGH'
