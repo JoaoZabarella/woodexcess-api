@@ -2,6 +2,8 @@ package com.z.c.woodexcess_api.dto.auth;
 
 import com.z.c.woodexcess_api.role.UserRole;
 
+import java.util.UUID;
+
 public record RegisterResponse(
         String id,
         String name,

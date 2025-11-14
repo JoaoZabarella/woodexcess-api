@@ -1,25 +1,24 @@
-
+# Maven
 target/
-.mvn/wrapper/maven-wrapper.jar
+!.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-### STS ###
+### Spring Boot ###
 .apt_generated
 .classpath
 .factorypath
 .project
-.settings
+.settings/
 .springBeans
 .sts4-cache
 
 ### IntelliJ IDEA ###
-.idea
+.idea/
 *.iws
 *.iml
 *.ipr
-*.env
-
+out/
 
 ### NetBeans ###
 /nbproject/private/
@@ -33,3 +32,33 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Logs ###
+logs/
+*.log
+*.log.*
+
+### OS ###
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+### Environment ###
+.env
+.env.local
+.env.*.local
+*.conf
+
+### Database ###
+*.sql.gz
+*.dump
+
+### Docker Override (não versionar customizações locais) ###
+docker-compose.override.yml
+
+# Flyway configuration (contains sensitive credentials)
+flyway.conf

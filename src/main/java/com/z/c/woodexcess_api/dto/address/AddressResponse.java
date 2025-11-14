@@ -1,10 +1,12 @@
 package com.z.c.woodexcess_api.dto.address;
 
 import com.z.c.woodexcess_api.model.Address;
+import lombok.Builder;
 
 import java.util.UUID;
 import java.time.LocalDateTime;
 
+@Builder
 public record AddressResponse(
         UUID id,
         String street,
