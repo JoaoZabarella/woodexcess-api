@@ -49,6 +49,7 @@ public class UserService {
                 .map(mapper::toUserResponse);
     }
 
+    @Transactional
     public UserResponse updateUser(UUID id, UpdateUserRequest dto){
         var user = repository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
@@ -63,6 +64,7 @@ public class UserService {
         return mapper.toUserResponse(updateUser);
     }
 
+    @Transactional
     public void changePassword(UUID id, ChangePasswordRequest dto){
         var user = repository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
@@ -76,10 +78,16 @@ public class UserService {
     public Page<UserResponse> getAllUsers(Pageable pageable){
         return repository.findAll(pageable).map(mapper::toUserResponse);
     }
-
+    @Transactional
     public void deactivateUser(UUID id) {
         var user = repository.findById(id).orElseThrow(() -> new EntityNotFoundException("User not found"));
         user.setActive(false);
         repository.save(user);
+    }
+
+    @Transactional
+    public User findEntityById(UUID id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
     }
 }
