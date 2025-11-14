@@ -43,6 +43,7 @@ jobs:
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/woodexcess_test
           SPRING_DATASOURCE_USERNAME: postgres
           SPRING_DATASOURCE_PASSWORD: postgres
+          SPRING_DATASOURCE_DRIVER: org.postgresql.Driver
 
       - name: Build application
         run: mvn clean package -DskipTests
