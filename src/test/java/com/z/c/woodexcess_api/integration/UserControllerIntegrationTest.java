@@ -29,8 +29,26 @@ public class UserControllerIntegrationTest {
 
     @Test
     void shouldRegisterUserWithAddressSuccessfully() throws Exception {
-        AddressRequest address = new AddressRequest("Rua X", "100", "", "Centro", "Cidade", "Estado", "12345-678", "Brasil");
-        RegisterRequest request = new RegisterRequest("John", "john@mail.com", "123456", "12345678", List.of(address));
+        // ✅ CORRIGIDO: "Estado" → "SP"
+        AddressRequest address = new AddressRequest(
+                "Rua X",
+                "100",
+                "",
+                "Centro",
+                "Cidade",
+                "SP",  // ✅ CORRIGIDO - UF com 2 caracteres
+                "12345-678",
+                "Brasil"
+        );
+
+        RegisterRequest request = new RegisterRequest(
+                "John",
+                "john@mail.com",
+                "123456",
+                "12345678",
+                List.of(address)
+        );
+
         mockMvc.perform(post("/api/users/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -42,8 +60,25 @@ public class UserControllerIntegrationTest {
 
     @Test
     void shouldFailToRegisterWithInvalidAddressPayload() throws Exception {
-        AddressRequest address = new AddressRequest("", "", "", "", "", "", "", "");
-        RegisterRequest request = new RegisterRequest("John", "john@mail.com", "123456", "12345678", List.of(address));
+        AddressRequest address = new AddressRequest(
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                ""
+        );
+
+        RegisterRequest request = new RegisterRequest(
+                "John",
+                "john@mail.com",
+                "123456",
+                "12345678",
+                List.of(address)
+        );
+
         mockMvc.perform(post("/api/users/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
