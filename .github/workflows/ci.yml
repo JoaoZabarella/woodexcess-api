@@ -36,8 +36,18 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      - name: Wait for PostgreSQL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+          for i in {1..30}; do
+            pg_isready -h localhost -p 5432 -U postgres && break
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
+
       - name: Run tests
-        run: mvn clean test
+        run: mvn clean test -Dspring.profiles.active=test
         env:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/woodexcess_test
