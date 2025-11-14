@@ -1,0 +1,53 @@
+# Maven
+target/
+
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+*.swp
+*.swo
+.classpath
+.project
+.settings/
+.factorypath
+.springBeans
+.sts4-cache
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+*.tmp
+
+# Environment
+.env
+.env.*
+*.conf
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Documentation
+README.md
+docs/
+*.md
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+azure-pipelines.yml
+
+# Tests
+**/test/
