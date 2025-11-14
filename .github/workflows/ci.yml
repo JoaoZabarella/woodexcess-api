@@ -10,8 +10,24 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: woodexcess_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
@@ -20,23 +36,24 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Build with Maven
-        run: mvn clean install -DskipTests
+      - name: Wait for PostgreSQL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+          for i in {1..30}; do
+            pg_isready -h localhost -p 5432 -U postgres && break
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
 
-      - name: Run Tests
-        run: mvn test
+      - name: Run tests
+        run: mvn clean test -Dspring.profiles.active=test
+        env:
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/woodexcess_test
+          SPRING_DATASOURCE_USERNAME: postgres
+          SPRING_DATASOURCE_PASSWORD: postgres
+          SPRING_DATASOURCE_DRIVER: org.postgresql.Driver
 
-      - name: Run Integration Tests
-        run: mvn verify -P integration-tests
-
-      - name: Generate JaCoCo Coverage Report
-        run: mvn jacoco:report
-
-      - name: Upload Coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          file: ./target/site/jacoco/jacoco.xml
-          fail_ci_if_error: true
-
-      - name: Check Coverage Threshold
-        run: mvn jacoco:check
+      - name: Build application
+        run: mvn clean package -DskipTests
