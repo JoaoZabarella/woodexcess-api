@@ -34,17 +34,19 @@ public class AuthControllerIntegrationTest {
 
     @Test
     void shouldLoginUserWithAddressSuccessfully() throws Exception {
-        // ✅ CORRIGIDO: "Estado" → "SP"
-        AddressRequest address = new AddressRequest(
-                "Rua Y",
-                "101",
-                "",
-                "Bairro",
-                "Cidade",
-                "SP",  // ✅ CORRIGIDO
-                "54321-987",
-                "Brasil"
-        );
+
+        AddressRequest address =  AddressRequest.builder()
+                .street("Rua Y")
+                .number("101")
+                .complement(null)
+                .district("Sul")
+                .city("São Paulo")
+                .state("SP")
+                .zipCode("12345-674")
+                .country("Italia")
+                .isPrimary(false)
+                .build();
+
 
         RegisterRequest registerRequest = new RegisterRequest(
                 "Jane",
@@ -69,17 +71,18 @@ public class AuthControllerIntegrationTest {
 
     @Test
     void shouldFailToLoginInactiveUser() throws Exception {
-        // ✅ CORRIGIDO: "UF" → "RJ"
-        AddressRequest address = new AddressRequest(
-                "Rua Z",
-                "200",
-                "",
-                "Novo",
-                "AnotherCity",
-                "RJ",  // ✅ CORRIGIDO
-                "99999-000",
-                "Brasil"
-        );
+
+        AddressRequest address =  AddressRequest.builder()
+                .street("Rua Z")
+                .number("200")
+                .complement("")
+                .district("Novo")
+                .city("AnotherCity")
+                .state("RJ")
+                .zipCode("99999-000")
+                .country("Brasil")
+                .isPrimary(true)
+                .build();
 
         RegisterRequest registerRequest = new RegisterRequest(
                 "Jack",
