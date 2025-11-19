@@ -32,6 +32,7 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
     @Value("${security.login.rate-limit.refill-minutes}")
     private int refillMinutes;
 
+    // Use ConcurrentHashMap para armazenar buckets de cada IP, sem erro de imports de cache
     private final Map<String, Bucket> cache = new ConcurrentHashMap<>();
 
     @Override

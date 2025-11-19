@@ -151,8 +151,8 @@ class UserServiceTest {
         Optional<UserResponse> result = userService.getUserByID(USER_ID);
 
         assertThat(result).isPresent();
-        assertThat(result.get().getId()).isEqualTo(USER_ID);
-        assertThat(result.get().getEmail()).isEqualTo(EMAIL);
+        assertThat(result.get().id()).isEqualTo(USER_ID);
+        assertThat(result.get().email()).isEqualTo(EMAIL);
 
         verify(repository).findById(USER_ID);
         verify(mapper).toUserResponse(user);
@@ -317,7 +317,7 @@ class UserServiceTest {
 
         assertThat(result).isNotNull();
         assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getContent().get(0).getId()).isEqualTo(USER_ID);
+        assertThat(result.getContent().get(0).id()).isEqualTo(USER_ID);
 
         verify(repository).findAll(pageable);
         verify(mapper).toUserResponse(user);
