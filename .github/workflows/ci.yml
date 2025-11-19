@@ -21,20 +21,21 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log Docker info
+      - name: Verify Docker is running
         run: |
           docker --version
           docker info
+
 
       - name: Run tests with Testcontainers
         run: mvn clean test
         env:
 
-          TESTCONTAINERS_RYUK_DISABLED: false
-          DOCKER_HOST: unix:///var/run/docker.sock
+          JWT_SECRET: ${{ secrets.JWT}}
 
       - name: Build application
         run: mvn clean package -DskipTests
@@ -46,7 +47,7 @@ jobs:
           name: jacoco-report
           path: target/site/jacoco/
 
-      - name: Upload test results
+      - name: Upload test results on failure
         uses: actions/upload-artifact@v4
         if: failure()
         with:
