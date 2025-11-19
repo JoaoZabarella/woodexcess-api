@@ -1,41 +1,41 @@
 package com.z.c.woodexcess_api.dto.address;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.z.c.woodexcess_api.model.Address;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 import java.time.LocalDateTime;
 
 @Builder
-public record AddressResponse(
-        UUID id,
-        String street,
-        String number,
-        String complement,
-        String district,
-        String city,
-        String state,
-        String zipCode,
-        String country,
-        Boolean active,
-        LocalDateTime createdAt,
-        LocalDateTime updatedAt
-) {
-    public AddressResponse (Address address){
-        this(
-                address.getId(),
-                address.getStreet(),
-                address.getNumber(),
-                address.getComplement(),
-                address.getDistrict(),
-                address.getCity(),
-                address.getState(),
-                address.getZipCode(),
-                address.getCountry(),
-                address.getActive(),
-                address.getCreatedAt(),
-                address.getUpdatedAt()
-        );
-    }
-}
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class AddressResponse{
 
+    private UUID id;
+    private UUID userId;
+    private String street;
+    private String number;
+    private String complement;
+    private String district;
+    private String city;
+    private String state;
+    private String zipCode;
+    private String country;
+    private Boolean active;
+    private Boolean isPrimary;
+
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime createdAt;
+
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime updatedAt;
+
+
+    private String fullAddress;
+
+}
