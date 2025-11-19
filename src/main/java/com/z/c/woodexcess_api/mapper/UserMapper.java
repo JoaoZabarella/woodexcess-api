@@ -14,9 +14,11 @@
     @Component
     public class UserMapper {
         private final PasswordEncoder passwordEncoder;
+        private final AddressMapper addressMapper;
 
-        public UserMapper(PasswordEncoder passwordEncoder) {
+        public UserMapper(PasswordEncoder passwordEncoder, AddressMapper addressMapper) {
             this.passwordEncoder = passwordEncoder;
+            this.addressMapper = addressMapper;
         }
 
         public User toEntity(RegisterRequest dto) {
@@ -32,16 +34,16 @@
             if (dto.addresses() != null) {
                 List<Address> addresses = dto.addresses().stream().map(addressDto -> {
                     Address address = new Address();
-                    address.setStreet(addressDto.street());
-                    address.setNumber(addressDto.number());
-                    address.setComplement(addressDto.complement());
-                    address.setDistrict(addressDto.district());
-                    address.setCity(addressDto.city());
-                    address.setState(addressDto.state());
-                    address.setZipCode(addressDto.zipCode());
-                    address.setCountry(addressDto.country());
+                    address.setStreet(addressDto.getStreet());
+                    address.setNumber(addressDto.getNumber());
+                    address.setComplement(addressDto.getComplement());
+                    address.setDistrict(addressDto.getDistrict());
+                    address.setCity(addressDto.getCity());
+                    address.setState(addressDto.getState());
+                    address.setZipCode(addressDto.getZipCode());
+                    address.setCountry(addressDto.getCountry());
                     address.setActive(true);
-                    address.setUser(user); // relacional JPA
+                    address.setUser(user);
                     return address;
                 }).toList();
                 user.setAddresses(addresses);
@@ -63,7 +65,7 @@
         }
 
         public UserResponse toUserResponse(User user) {
-            return new UserResponse(user);
+            return new UserResponse(user, addressMapper);
         }
     }
 
