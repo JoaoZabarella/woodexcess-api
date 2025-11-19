@@ -21,13 +21,20 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
+      - name: Log Docker info
+        run: |
+          docker --version
+          docker info
 
       - name: Run tests with Testcontainers
         run: mvn clean test
         env:
 
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          TESTCONTAINERS_RYUK_DISABLED: false
+          DOCKER_HOST: unix:///var/run/docker.sock
 
       - name: Build application
         run: mvn clean package -DskipTests
@@ -38,3 +45,12 @@ jobs:
         with:
           name: jacoco-report
           path: target/site/jacoco/
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-results
+          path: |
+            target/surefire-reports/
+            target/*.dump
