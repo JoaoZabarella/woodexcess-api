@@ -25,17 +25,28 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Verify Docker is running
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+        continue-on-error: true
+
+
+      - name: Verify Docker
         run: |
           docker --version
           docker info
 
 
       - name: Run tests with Testcontainers
-        run: mvn clean test
+        run: mvn clean test -Dspring.profiles.active=test
         env:
 
-          JWT_SECRET: ${{ secrets.JWT}}
+          TESTCONTAINERS_RYUK_DISABLED: false
+          TESTCONTAINERS_CHECKS_DISABLE: false
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
       - name: Build application
         run: mvn clean package -DskipTests
