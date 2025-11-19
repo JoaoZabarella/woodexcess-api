@@ -31,17 +31,18 @@ public class UserControllerIntegrationTest {
 
     @Test
     void shouldRegisterUserWithAddressSuccessfully() throws Exception {
-        // ✅ CORRIGIDO: "Estado" → "SP"
-        AddressRequest address = new AddressRequest(
-                "Rua X",
-                "100",
-                "",
-                "Centro",
-                "Cidade",
-                "SP",  // ✅ CORRIGIDO - UF com 2 caracteres
-                "12345-678",
-                "Brasil"
-        );
+
+        AddressRequest address =  AddressRequest.builder()
+                .street("Rua X")
+                .number("100")
+                .complement(null)
+                .district("Centro")
+                .city("Cidade")
+                .state("SP")
+                .zipCode("12345-678")
+                .country("Brasil")
+                .isPrimary(false)
+                .build();
 
         RegisterRequest request = new RegisterRequest(
                 "John",
@@ -62,16 +63,18 @@ public class UserControllerIntegrationTest {
 
     @Test
     void shouldFailToRegisterWithInvalidAddressPayload() throws Exception {
-        AddressRequest address = new AddressRequest(
-                "",
-                "",
-                "",
-                "",
-                "",
-                "",
-                "",
-                ""
-        );
+
+        AddressRequest address = AddressRequest.builder()
+                .street("")
+                .number("100")
+                .complement(null)
+                .district("Centro")
+                .city("Cidade")
+                .state("SP")
+                .zipCode("12345-678")
+                .country("Brasil")
+                .isPrimary(false)
+                .build();
 
         RegisterRequest request = new RegisterRequest(
                 "John",
