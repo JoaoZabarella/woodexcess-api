@@ -34,7 +34,7 @@ public class AddressService {
 
     @Transactional
     public AddressResponse create(UUID userId, AddressRequest request) {
-        log.info("Creating address for user {}", userId);
+        log.info("[CREATE_ADDRESS] Iniciando criação de endereço para usuário {}", userId);
 
         User user = userService.findEntityById(userId);
         validateMaxAddresses(userId);
@@ -47,7 +47,7 @@ public class AddressService {
         }
 
         Address saved = addressRepository.save(address);
-        log.info("Address {} created successfully", saved.getId());
+        log.info("[CREATE_ADDRESS] Endereço {} criado com sucesso para usuário {}", saved.getId(), userId);
 
         return addressMapper.toResponseDTO(saved);
     }

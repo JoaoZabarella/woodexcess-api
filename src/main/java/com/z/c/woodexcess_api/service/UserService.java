@@ -35,11 +35,11 @@ public class UserService {
 
     @Transactional
     public RegisterResponse registerUser(RegisterRequest dto) {
-        if (repository.findByEmail(dto.email()).isPresent()) {
+        if (repository.findByEmail(dto.getEmail()).isPresent()) {
             throw new EmailAlredyExistException("Email already exists");
         }
         User user = mapper.toEntity(dto);
-        user.setPassword(encoder.encode(dto.password()));
+        user.setPassword(encoder.encode(dto.getPassword()));
         User savedUser = repository.save(user);
         return mapper.toRegisterResponse(savedUser);
     }

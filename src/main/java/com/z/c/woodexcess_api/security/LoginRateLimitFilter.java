@@ -1,6 +1,7 @@
 package com.z.c.woodexcess_api.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.z.c.woodexcess_api.config.RateLimitProperties;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Refill;
@@ -8,7 +9,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -21,23 +23,17 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
+@RequiredArgsConstructor
+@Slf4j
 public class LoginRateLimitFilter extends OncePerRequestFilter {
 
-    @Value("${security.login.rate-limit.capacity}")
-    private int capacity;
-
-    @Value("${security.login.rate-limit.refill-tokens}")
-    private int refillTokens;
-
-    @Value("${security.login.rate-limit.refill-minutes}")
-    private int refillMinutes;
-
-    // Use ConcurrentHashMap para armazenar buckets de cada IP, sem erro de imports de cache
+    private final RateLimitProperties rateLimitProperties;
     private final Map<String, Bucket> cache = new ConcurrentHashMap<>();
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+
 
         if (!request.getRequestURI().equals("/api/auth/login") || !"POST".equals(request.getMethod())) {
             filterChain.doFilter(request, response);
@@ -48,8 +44,11 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
         Bucket bucket = resolveBucket(key);
 
         if (bucket.tryConsume(1)) {
+            log.debug("[RATE_LIMIT] Login attempt allowed for IP: {}", key);
             filterChain.doFilter(request, response);
         } else {
+            log.warn("[RATE_LIMIT] Login attempt blocked for IP: {} - Too many requests", key);
+
             response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
@@ -69,11 +68,15 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
     }
 
     private Bucket createNewBucket() {
-        Bandwidth limit = Bandwidth.classic(capacity,
-                Refill.intervally(refillTokens, Duration.ofMinutes(refillMinutes)));
-        return Bucket.builder()
-                .addLimit(limit)
-                .build();
+
+        Bandwidth limit = Bandwidth.classic(
+                rateLimitProperties.getCapacity(),
+                Refill.intervally(
+                        rateLimitProperties.getRefillTokens(),
+                        Duration.ofMinutes(rateLimitProperties.getRefillMinutes())
+                )
+        );
+        return Bucket.builder().addLimit(limit).build();
     }
 
     private String getClientIdentifier(HttpServletRequest request) {
@@ -81,12 +84,21 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
         if (ip == null || ip.isEmpty()) {
             ip = request.getRemoteAddr();
         }
-        return ip;
+
+        return ip.split(",")[0].trim();
     }
 
-    // (Opcional) Limpar buckets "ociosos" após 1h, caso haja preocupação com memória
-    @Scheduled(fixedRate = 3600000) // cada 1h
+
+    @Scheduled(fixedRate = 3600000) // cada 1 hora
     public void cleanupOldBuckets() {
-        cache.entrySet().removeIf(entry -> entry.getValue().getAvailableTokens() == capacity);
+        int sizeBefore = cache.size();
+        cache.entrySet().removeIf(entry ->
+                entry.getValue().getAvailableTokens() == rateLimitProperties.getCapacity()
+        );
+        int sizeAfter = cache.size();
+
+        if (sizeBefore > sizeAfter) {
+            log.info("[RATE_LIMIT] Cleaned up {} inactive buckets", sizeBefore - sizeAfter);
+        }
     }
 }

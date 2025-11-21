@@ -1,6 +1,7 @@
 package com.z.c.woodexcess_api.exception;
 
 import com.z.c.woodexcess_api.dto.error.ErrorResponse;
+import com.z.c.woodexcess_api.exception.address.AddressNotFoundException;
 import com.z.c.woodexcess_api.exception.auth.RefreshTokenException;
 import com.z.c.woodexcess_api.exception.auth.TokenReuseDetectedException;
 import com.z.c.woodexcess_api.exception.users.EmailAlredyExistException;
@@ -216,4 +217,17 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
+
+    @ExceptionHandler(AddressNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleAddressNotFound(AddressNotFoundException ex, HttpServletRequest request) {
+        logger.error("Address not found: {}", ex.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                "Not Found",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
 }
