@@ -111,7 +111,7 @@ class UserServiceTest {
     @Test
     @DisplayName("Should register new user successfully")
     void shouldRegisterUserSuccessfully() {
-        when(repository.findByEmail(registerRequest.email())).thenReturn(Optional.empty());
+        when(repository.findByEmail(registerRequest.getEmail())).thenReturn(Optional.empty());
         when(mapper.toEntity(registerRequest)).thenReturn(user);
         when(encoder.encode(anyString())).thenReturn(ENCODED_PASSWORD);
         when(repository.save(any(User.class))).thenReturn(user);
@@ -122,7 +122,7 @@ class UserServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.email()).isEqualTo("new@mail.com");
 
-        verify(repository).findByEmail(registerRequest.email());
+        verify(repository).findByEmail(registerRequest.getEmail());
         verify(encoder).encode(anyString());
         verify(repository).save(any(User.class));
         verify(mapper).toRegisterResponse(user);
@@ -131,13 +131,13 @@ class UserServiceTest {
     @Test
     @DisplayName("Should throw EmailAlredyExistException when email exists")
     void shouldThrowExceptionWhenEmailExists() {
-        when(repository.findByEmail(registerRequest.email())).thenReturn(Optional.of(user));
+        when(repository.findByEmail(registerRequest.getEmail())).thenReturn(Optional.of(user));
 
         assertThatThrownBy(() -> userService.registerUser(registerRequest))
                 .isInstanceOf(EmailAlredyExistException.class)
                 .hasMessage("Email already exists");
 
-        verify(repository).findByEmail(registerRequest.email());
+        verify(repository).findByEmail(registerRequest.getEmail());
         verifyNoInteractions(encoder, mapper);
         verify(repository, never()).save(any());
     }

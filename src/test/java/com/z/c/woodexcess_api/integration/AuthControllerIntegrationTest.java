@@ -5,15 +5,18 @@ import com.z.c.woodexcess_api.dto.address.AddressRequest;
 import com.z.c.woodexcess_api.dto.auth.LoginRequest;
 import com.z.c.woodexcess_api.dto.auth.RegisterRequest;
 import com.z.c.woodexcess_api.repository.UserRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -21,6 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class AuthControllerIntegrationTest {
 
     @Autowired
@@ -33,9 +37,12 @@ public class AuthControllerIntegrationTest {
     private UserRepository userRepository;
 
     @Test
+    @DisplayName("Deve fazer login com usuário que possui endereço")
     void shouldLoginUserWithAddressSuccessfully() throws Exception {
 
-        AddressRequest address =  AddressRequest.builder()
+        String uniqueEmail = "jane-" + UUID.randomUUID() + "@mail.com";
+
+        AddressRequest address = AddressRequest.builder()
                 .street("Rua Y")
                 .number("101")
                 .complement(null)
@@ -47,11 +54,12 @@ public class AuthControllerIntegrationTest {
                 .isPrimary(false)
                 .build();
 
+
         RegisterRequest registerRequest = new RegisterRequest(
                 "Jane",
-                "jane@mail.com",
-                "98765432",
-                "securePass123",
+                uniqueEmail,
+                "11987654321",
+                "SecurePass123!@#",
                 List.of(address)
         );
 
@@ -60,18 +68,22 @@ public class AuthControllerIntegrationTest {
                         .content(objectMapper.writeValueAsString(registerRequest)))
                 .andExpect(status().isCreated());
 
-        LoginRequest loginRequest = new LoginRequest("jane@mail.com", "securePass123");
+        LoginRequest loginRequest = new LoginRequest(uniqueEmail, "SecurePass123!@#");
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").exists())
+                .andExpect(jsonPath("$.refreshToken").exists());
     }
 
     @Test
+    @DisplayName("Deve falhar ao fazer login com usuário inativo")
     void shouldFailToLoginInactiveUser() throws Exception {
+        String uniqueEmail = "jack-" + UUID.randomUUID() + "@mail.com";
 
-        AddressRequest address =  AddressRequest.builder()
+        AddressRequest address = AddressRequest.builder()
                 .street("Rua Z")
                 .number("200")
                 .complement("")
@@ -85,9 +97,9 @@ public class AuthControllerIntegrationTest {
 
         RegisterRequest registerRequest = new RegisterRequest(
                 "Jack",
-                "jack@mail.com",
-                "13579113",
-                "passInactive",
+                uniqueEmail,
+                "21987654321",
+                "PassInactive123!@#",
                 List.of(address)
         );
 
@@ -96,17 +108,17 @@ public class AuthControllerIntegrationTest {
                         .content(objectMapper.writeValueAsString(registerRequest)))
                 .andExpect(status().isCreated());
 
-        // Desativa o usuário após o registro
-        userRepository.findByEmail("jack@mail.com").ifPresent(user -> {
+        userRepository.findByEmail(uniqueEmail).ifPresent(user -> {
             user.setActive(false);
             userRepository.save(user);
         });
 
-        LoginRequest loginRequest = new LoginRequest("jack@mail.com", "passInactive");
+        LoginRequest loginRequest = new LoginRequest(uniqueEmail, "PassInactive123!@#");
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Invalid credentials"));
     }
 }

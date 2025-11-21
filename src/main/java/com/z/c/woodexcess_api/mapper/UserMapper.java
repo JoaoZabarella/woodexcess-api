@@ -23,16 +23,16 @@
 
         public User toEntity(RegisterRequest dto) {
             User user = new User();
-            user.setName(dto.name());
-            user.setEmail(dto.email());
-            user.setPhone(dto.phone());
-            user.setPassword(passwordEncoder.encode(dto.password()));
+            user.setName(dto.getName());
+            user.setEmail(dto.getEmail());
+            user.setPhone(dto.getPhone());
+            user.setPassword(passwordEncoder.encode(dto.getPassword()));
             user.setRole(UserRole.USER);
             user.setActive(true);
 
 
-            if (dto.addresses() != null) {
-                List<Address> addresses = dto.addresses().stream().map(addressDto -> {
+            if (dto.getAddresses() != null) {
+                List<Address> addresses = dto.getAddresses().stream().map(addressDto -> {
                     Address address = new Address();
                     address.setStreet(addressDto.getStreet());
                     address.setNumber(addressDto.getNumber());

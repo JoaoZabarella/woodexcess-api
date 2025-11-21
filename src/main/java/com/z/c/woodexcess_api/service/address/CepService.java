@@ -17,7 +17,7 @@ public class CepService {
 
     @Cacheable(value = "cep", key = "#cep", unless = "#result == null")
     public ViaCepResponse findAddressByCep(String cep) {
-        log.info("Buscando CEP {} via ViaCEP", cep);
+        log.info("[VIACEP] Buscando informações do CEP: {}", cep);
 
         String normalized = normalizeCep(cep);
         validateCep(normalized);
@@ -26,15 +26,16 @@ public class CepService {
             ViaCepResponse response = viaCepClient.findCep(normalized);
 
             if (response.isErro()) {
-                log.warn("CEP {} not found in ViaCEP", normalized);
+                log.warn("[VIACEP] CEP {} não encontrado na base de dados", normalized);
                 throw new CepApiException("CEP not found: " + cep);
             }
 
-            log.info("CEP {} found successfully", normalized);
+            log.info("[VIACEP] CEP {} encontrado com sucesso: {}, {}-{}",
+                    normalized, response.getCity(), response.getDistrict(), response.getState());
             return response;
 
         } catch (Exception e) {
-            log.error("Error calling ViaCEP for CEP {}: {}", normalized, e.getMessage());
+            log.error("[VIACEP] Erro ao consultar CEP {}: {}", normalized, e.getMessage());
             throw new CepApiException("Error fetching CEP data: " + e.getMessage(), e);
         }
     }
