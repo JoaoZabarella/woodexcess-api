@@ -31,7 +31,7 @@ public class AddressController {
             @Valid @RequestBody AddressRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        log.info("POST /api/addresses - User: {}", userDetails.getUsername());
+        log.info("Creating address for user '{}', payload: {}", userDetails.getUsername(), request);
         AddressResponse response = addressService.create(userDetails.getId(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -50,7 +50,7 @@ public class AddressController {
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<AddressResponse> findById(@PathVariable UUID id) {
-        log.info("GET /api/addresses/{}", id);
+        log.info("GET ID /api/addresses/{}", id);
         AddressResponse response = addressService.findById(id);
         return ResponseEntity.ok(response);
     }
@@ -58,7 +58,7 @@ public class AddressController {
     @GetMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<AddressResponse>> findAll(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        log.info("GET /api/addresses - User: {}", userDetails.getUsername());
+        log.info("GET ALL /api/addresses - User: {}", userDetails.getUsername());
         List<AddressResponse> addresses = addressService.findAllByUser(userDetails.getId());
         return ResponseEntity.ok(addresses);
     }
@@ -77,9 +77,10 @@ public class AddressController {
             @PathVariable UUID id,
             @Valid @RequestBody AddressRequest request
     ) {
-        log.info("PUT /api/addresses/{}", id);
+        log.info("Updating address - ID: {}, Payload: {}", id, request);
         AddressResponse response = addressService.update(id, request);
         return ResponseEntity.ok(response);
+
     }
 
     @PatchMapping("/{id}/set-primary")
@@ -93,7 +94,7 @@ public class AddressController {
     @DeleteMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        log.info("DELETE /api/addresses/{}", id);
+        log.info("Deleting address - ID: {}", id);
         addressService.delete(id);
         return ResponseEntity.noContent().build();
     }
