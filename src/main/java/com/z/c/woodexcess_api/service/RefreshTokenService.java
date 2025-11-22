@@ -19,6 +19,8 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HexFormat;
 import java.util.UUID;
 
@@ -161,7 +163,7 @@ public class RefreshTokenService {
 
             // Ordenar por data de criação e revogar os mais antigos
             tokens.stream()
-                    .sorted((t1, t2) -> t1.getCreatedAt().compareTo(t2.getCreatedAt()))
+                    .sorted(Comparator.comparing(RefreshToken::getCreatedAt))
                     .limit(activeTokens - maxDevices + 1)
                     .forEach(token -> {
                         token.setRevoked(true);
@@ -217,7 +219,7 @@ public class RefreshTokenService {
 
         // Handle proxy chains
         if (ip != null && ip.contains(",")) {
-            ip = ip.split(",").toString().trim();
+            ip = Arrays.toString(ip.split(",")).trim();
         }
 
         return ip != null ? ip : "unknown";  // Nunca retornar null
