@@ -47,8 +47,7 @@ public class RefreshTokenService {
         this.jwtProvider = jwtProvider;
     }
 
-
-     // Cria um novo refresh token e retorna o TOKEN ORIGINAL (não o hash)
+    // Cria um novo refresh token e retorna o TOKEN ORIGINAL (não o hash)
     @Transactional
     public String createRefreshToken(User user, HttpServletRequest request) {
         // Limitar dispositivos por usuário
@@ -131,8 +130,8 @@ public class RefreshTokenService {
 
             // Retorna DTO com token raw (para o cliente) e hash separados
             return TokenRotationResult.builder()
-                    .rawToken(newToken)        // Token UUID original (enviar ao cliente)
-                    .tokenHash(newTokenHash)   // Hash SHA-256 (já no banco)
+                    .rawToken(newToken) // Token UUID original (enviar ao cliente)
+                    .tokenHash(newTokenHash) // Hash SHA-256 (já no banco)
                     .userId(currentToken.getUser().getId())
                     .build();
         }
@@ -217,9 +216,9 @@ public class RefreshTokenService {
 
         // Handle proxy chains
         if (ip != null && ip.contains(",")) {
-            ip = ip.split(",").toString().trim();
+            ip = ip.split(",")[0].trim();
         }
 
-        return ip != null ? ip : "unknown";  // Nunca retornar null
+        return ip != null ? ip : "unknown"; // Nunca retornar null
     }
 }
