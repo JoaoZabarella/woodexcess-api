@@ -1,6 +1,7 @@
 package com.z.c.woodexcess_api.repository;
 
 import com.z.c.woodexcess_api.model.Address;
+import com.z.c.woodexcess_api.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -20,6 +21,8 @@ public interface AddressRepository extends JpaRepository<Address, UUID> {
 
     Optional<Address> findByUserIdAndIsPrimaryTrueAndActiveTrue(UUID userId);
 
+    Optional<Address> findByUserAndActiveAndIsPrimary(User user, Boolean active, Boolean isPrimary);
+
     @Query("SELECT COUNT(a) FROM Address a WHERE a.user.id = :userId AND a.active = true")
     long countActiveAddressesByUser(@Param("userId") UUID userId);
 
@@ -27,8 +30,7 @@ public interface AddressRepository extends JpaRepository<Address, UUID> {
     Optional<Address> findDuplicateAddress(
             @Param("userId") UUID userId,
             @Param("zipCode") String zipCode,
-            @Param("number") String number
-    );
+            @Param("number") String number);
 
     @Modifying
     @Query("UPDATE Address a SET a.isPrimary = false WHERE a.user.id = :userId")

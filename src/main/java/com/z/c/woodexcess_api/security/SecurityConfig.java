@@ -15,45 +15,47 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthFilter;
-    private final LoginRateLimitFilter rateLimitFilter;
+        private final JwtAuthenticationFilter jwtAuthFilter;
+        private final LoginRateLimitFilter rateLimitFilter;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter, LoginRateLimitFilter rateLimitFilter) {
-        this.jwtAuthFilter = jwtAuthFilter;
-        this.rateLimitFilter = rateLimitFilter;
-    }
+        public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter, LoginRateLimitFilter rateLimitFilter) {
+                this.jwtAuthFilter = jwtAuthFilter;
+                this.rateLimitFilter = rateLimitFilter;
+        }
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/api/auth/login",
-                                "/api/auth/refresh",
-                                "/api/users/register"
-                        ).permitAll()
+        @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+                http
+                                .csrf(AbstractHttpConfigurer::disable)
+                                .sessionManagement(session -> session
+                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                .authorizeHttpRequests(auth -> auth
+                                                .requestMatchers(
+                                                                "/api/auth/login",
+                                                                "/api/auth/refresh",
+                                                                "/api/users/register")
+                                                .permitAll()
 
-                        .requestMatchers(
-                                "/h2-console/**",
-                                "/actuator/**"
-                        ).permitAll()
+                                                .requestMatchers(
+                                                                "/h2-console/**",
+                                                                "/actuator/**")
+                                                .permitAll()
 
+                                                // Listings - GET público, POST/PUT/PATCH autenticado
+                                                .requestMatchers(org.springframework.http.HttpMethod.GET,
+                                                                "/api/listings/**")
+                                                .permitAll()
 
-                        .anyRequest().authenticated()
-                )
+                                                .anyRequest().authenticated())
 
-                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
+                                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
-        return http.build();
-    }
+                return http.build();
+        }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+        @Bean
+        public PasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder();
+        }
 }

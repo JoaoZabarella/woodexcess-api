@@ -3,7 +3,7 @@ package com.z.c.woodexcess_api.dto.user;
 import com.z.c.woodexcess_api.dto.address.AddressResponse;
 import com.z.c.woodexcess_api.mapper.AddressMapper;
 import com.z.c.woodexcess_api.model.User;
-import com.z.c.woodexcess_api.role.UserRole;
+import com.z.c.woodexcess_api.enums.UserRole;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -35,10 +35,8 @@ public class UserResponse {
         this.role = user.getRole();
         this.addresses = user.getAddresses() != null
                 ? user.getAddresses().stream()
-                .map(addressMapper::toResponseDTO)
-                .collect(Collectors.toList())
+                        .map(addressMapper::toResponseDTO)
+                        .collect(Collectors.toList())
                 : List.of();
     }
 }
-
-

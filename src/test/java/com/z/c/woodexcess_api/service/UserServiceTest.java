@@ -12,8 +12,10 @@ import com.z.c.woodexcess_api.exception.users.PasswordIncorrectException;
 import com.z.c.woodexcess_api.mapper.UserMapper;
 import com.z.c.woodexcess_api.model.User;
 import com.z.c.woodexcess_api.repository.UserRepository;
-import com.z.c.woodexcess_api.role.UserRole;
+import com.z.c.woodexcess_api.enums.UserRole;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.constraints.NotNull;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -55,6 +57,7 @@ class UserServiceTest {
     @InjectMocks
     private UserService userService;
 
+    @NotNull
     private User user;
     private RegisterRequest registerRequest;
     private RegisterResponse registerResponse;
@@ -83,18 +86,15 @@ class UserServiceTest {
                 "new@mail.com",
                 PASSWORD,
                 "987654321",
-                addresses
-        );
+                addresses);
 
-        // RegisterResponse: String id (não UUID!), com active e role
         registerResponse = new RegisterResponse(
-                UUID.randomUUID().toString(),  // ← String, não UUID
+                UUID.randomUUID().toString(),
                 "New User",
                 "new@mail.com",
                 "987654321",
-                true,  // ← active
-                UserRole.USER
-        );
+                true,
+                UserRole.USER);
 
         // UserResponse: 7 parâmetros (id, name, email, phone, active, role, addresses)
         userResponse = new UserResponse(
@@ -102,9 +102,9 @@ class UserServiceTest {
                 "Test User",
                 EMAIL,
                 "123456789",
-                true,  // ← active
+                true, // ← active
                 UserRole.USER,
-                new ArrayList<>()  // ← Lista de AddressResponse
+                new ArrayList<>() // ← Lista de AddressResponse
         );
     }
 

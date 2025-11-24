@@ -6,7 +6,7 @@ import com.z.c.woodexcess_api.exception.auth.TokenReuseDetectedException;
 import com.z.c.woodexcess_api.model.RefreshToken;
 import com.z.c.woodexcess_api.model.User;
 import com.z.c.woodexcess_api.repository.RefreshTokenRepository;
-import com.z.c.woodexcess_api.role.UserRole;
+import com.z.c.woodexcess_api.enums.UserRole;
 import com.z.c.woodexcess_api.security.JwtProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;

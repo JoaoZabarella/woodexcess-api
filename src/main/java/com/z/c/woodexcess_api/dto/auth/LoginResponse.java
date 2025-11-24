@@ -1,6 +1,6 @@
 package com.z.c.woodexcess_api.dto.auth;
 
-import com.z.c.woodexcess_api.role.UserRole;
+import com.z.c.woodexcess_api.enums.UserRole;
 
 public record LoginResponse(
         String accessToken,
@@ -8,8 +8,8 @@ public record LoginResponse(
         String tokenType,
         Long expiresIn
 
-){
-    public LoginResponse(String accessToken, String refreshToken, Long expiresIn){
+) {
+    public LoginResponse(String accessToken, String refreshToken, Long expiresIn) {
         this(accessToken, refreshToken, "Bearer", expiresIn);
     }
 }

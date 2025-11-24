@@ -1,0 +1,180 @@
+package com.z.c.woodexcess_api.service;
+
+import com.z.c.woodexcess_api.dto.listing.CreateListingRequest;
+import com.z.c.woodexcess_api.dto.listing.ListingFilterRequest;
+import com.z.c.woodexcess_api.dto.listing.ListingResponse;
+import com.z.c.woodexcess_api.dto.listing.UpdateListingRequest;
+import com.z.c.woodexcess_api.enums.ListingStatus;
+import com.z.c.woodexcess_api.enums.UserRole;
+import com.z.c.woodexcess_api.exception.BusinessException;
+import com.z.c.woodexcess_api.exception.address.AddressNotFoundException;
+import com.z.c.woodexcess_api.exception.listing.ListingNotFoundException;
+import com.z.c.woodexcess_api.exception.listing.UnauthorizedListingAccessException;
+import com.z.c.woodexcess_api.mapper.MaterialListingMapper;
+import com.z.c.woodexcess_api.model.Address;
+import com.z.c.woodexcess_api.model.MaterialListing;
+import com.z.c.woodexcess_api.model.User;
+import com.z.c.woodexcess_api.repository.AddressRepository;
+import com.z.c.woodexcess_api.repository.MaterialListingRepository;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
+
+@Service
+@Slf4j
+public class MaterialListingService {
+
+    private final MaterialListingRepository listingRepository;
+    private final AddressRepository addressRepository;
+    private final MaterialListingMapper mapper;
+
+    public MaterialListingService(
+            MaterialListingRepository listingRepository,
+            AddressRepository addressRepository,
+            MaterialListingMapper mapper) {
+        this.listingRepository = listingRepository;
+        this.addressRepository = addressRepository;
+        this.mapper = mapper;
+    }
+
+    @Transactional
+    public ListingResponse createListing(CreateListingRequest request, User currentUser) {
+        log.info("Creating listing for user: {}", currentUser.getEmail());
+
+        if (!currentUser.getActive()) {
+            throw new BusinessException("Cannot create listing: user account is inactive");
+        }
+
+        Address address = null;
+        if (request.addressId() != null) {
+            address = addressRepository.findById(request.addressId())
+                    .orElseThrow(() -> new AddressNotFoundException(request.addressId()));
+
+            if (!address.getUser().getId().equals(currentUser.getId())) {
+                throw new UnauthorizedListingAccessException("Address does not belong to current user");
+            }
+
+            if (!address.isActive()) {
+                throw new BusinessException("Cannot use inactive address for listing");
+            }
+        }
+
+        if (address == null) {
+            address = addressRepository.findByUserAndActiveAndIsPrimary(currentUser, true, true)
+                    .orElseThrow(() -> new BusinessException(
+                            "User must have at least one active address to create a listing"));
+        }
+
+        MaterialListing listing = mapper.toEntity(request, currentUser, address);
+
+        MaterialListing savedListing = listingRepository.save(listing);
+
+        log.info("Listing created successfully with id: {}", savedListing.getId());
+        return mapper.toResponse(savedListing);
+    }
+
+    @Transactional
+    public ListingResponse updateListing(UUID listingId, UpdateListingRequest request, User currentUser) {
+        log.info("Updating listing {} by user: {}", listingId, currentUser.getEmail());
+
+        MaterialListing listing = listingRepository.findById(listingId)
+                .orElseThrow(() -> new ListingNotFoundException(listingId));
+
+        validateOwnershipOrAdmin(listing, currentUser);
+
+        if (request.title() != null) {
+            listing.setTitle(request.title());
+        }
+        if (request.description() != null) {
+            listing.setDescription(request.description());
+        }
+        if (request.materialType() != null) {
+            listing.setMaterialType(request.materialType());
+        }
+        if (request.price() != null) {
+            listing.setPrice(request.price());
+        }
+        if (request.quantity() != null) {
+            listing.setQuantity(request.quantity());
+        }
+        if (request.condition() != null) {
+            listing.setCondition(request.condition());
+        }
+        if (request.addressId() != null) {
+            Address newAddress = addressRepository.findById(request.addressId())
+                    .orElseThrow(() -> new AddressNotFoundException(request.addressId()));
+
+            if (!newAddress.getUser().getId().equals(listing.getOwner().getId())) {
+                throw new UnauthorizedListingAccessException("Address does not belong to listing owner");
+            }
+
+            listing.setAddress(newAddress);
+            listing.setCity(newAddress.getCity());
+            listing.setState(newAddress.getState());
+        }
+
+        MaterialListing updatedListing = listingRepository.save(listing);
+
+        log.info("Listing {} updated successfully", listingId);
+        return mapper.toResponse(updatedListing);
+    }
+
+    @Transactional
+    public void deactivateListing(UUID listingId, User currentUser) {
+        log.info("Deactivating listing {} by user: {}", listingId, currentUser.getEmail());
+
+        MaterialListing listing = listingRepository.findById(listingId)
+                .orElseThrow(() -> new ListingNotFoundException(listingId));
+
+        validateOwnershipOrAdmin(listing, currentUser);
+
+        listing.deactivate();
+        listingRepository.save(listing);
+
+        log.info("Listing {} deactivated successfully", listingId);
+    }
+
+    @Transactional(readOnly = true)
+    public ListingResponse getListingById(UUID listingId) {
+        log.debug("Fetching listing by id: {}", listingId);
+
+        MaterialListing listing = listingRepository.findById(listingId)
+                .orElseThrow(() -> new ListingNotFoundException(listingId));
+
+        return mapper.toResponse(listing);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ListingResponse> getAllListings(ListingFilterRequest filters, Pageable pageable) {
+        log.debug("Fetching listings with filters: {}", filters);
+
+        String status = filters.getStatus() != null ? filters.getStatus().name() : ListingStatus.ACTIVE.name();
+        String materialType = filters.getMaterialType() != null ? filters.getMaterialType().name() : null;
+        String condition = filters.getCondition() != null ? filters.getCondition().name() : null;
+
+        Page<MaterialListing> listings = listingRepository.findByFilters(
+                status,
+                materialType,
+                filters.getCity(),
+                filters.getState(),
+                filters.getMinPrice(),
+                filters.getMaxPrice(),
+                condition,
+                pageable);
+
+        return listings.map(mapper::toResponse);
+    }
+
+    private void validateOwnershipOrAdmin(MaterialListing listing, User currentUser) {
+        boolean isOwner = listing.isOwnedBy(currentUser.getId());
+        boolean isAdmin = currentUser.getRole() == UserRole.ADMIN;
+
+        if (!isOwner && !isAdmin) {
+            throw new UnauthorizedListingAccessException();
+        }
+    }
+}

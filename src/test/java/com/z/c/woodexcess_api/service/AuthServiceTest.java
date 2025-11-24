@@ -4,7 +4,7 @@ import com.z.c.woodexcess_api.dto.auth.LoginResponse;
 import com.z.c.woodexcess_api.dto.auth.TokenRotationResult;
 import com.z.c.woodexcess_api.model.User;
 import com.z.c.woodexcess_api.repository.UserRepository;
-import com.z.c.woodexcess_api.role.UserRole;
+import com.z.c.woodexcess_api.enums.UserRole;
 import com.z.c.woodexcess_api.security.JwtProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
@@ -69,7 +69,7 @@ class AuthServiceTest {
                 .build();
     }
 
-// ========== TESTES DE authenticate() ==========
+    // ========== TESTES DE authenticate() ==========
 
     @Test
     @DisplayName("Should authenticate successfully with valid credentials")
@@ -148,7 +148,7 @@ class AuthServiceTest {
         verifyNoInteractions(jwtProvider, refreshTokenService);
     }
 
-// ========== TESTES DE refreshAccessToken() ==========
+    // ========== TESTES DE refreshAccessToken() ==========
 
     @Test
     @DisplayName("Should refresh access token successfully")
@@ -211,7 +211,7 @@ class AuthServiceTest {
         verifyNoInteractions(jwtProvider);
     }
 
-// ========== TESTES DE logout() ==========
+    // ========== TESTES DE logout() ==========
 
     @Test
     @DisplayName("Should logout and revoke refresh token")
