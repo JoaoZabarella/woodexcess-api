@@ -5,6 +5,7 @@ import com.z.c.woodexcess_api.dto.listing.ListingFilterRequest;
 import com.z.c.woodexcess_api.dto.listing.ListingResponse;
 import com.z.c.woodexcess_api.dto.listing.UpdateListingRequest;
 import com.z.c.woodexcess_api.model.User;
+import com.z.c.woodexcess_api.security.CustomUserDetails;
 import com.z.c.woodexcess_api.service.MaterialListingService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -33,10 +34,10 @@ public class MaterialListingController extends BaseController {
     @PostMapping
     public ResponseEntity<ListingResponse> createListing(
             @Valid @RequestBody CreateListingRequest request,
-            @AuthenticationPrincipal User currentUser) {
-        log.info("POST /api/listings - Creating listing for user: {}", currentUser.getEmail());
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        log.info("POST /api/listings - Creating listing for user: {}", userDetails.getUsername());
 
-        ListingResponse response = listingService.createListing(request, currentUser);
+        ListingResponse response = listingService.createListing(request, userDetails.user());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -65,10 +66,10 @@ public class MaterialListingController extends BaseController {
     public ResponseEntity<ListingResponse> updateListing(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateListingRequest request,
-            @AuthenticationPrincipal User currentUser) {
-        log.info("PUT /api/listings/{} - Updating listing for user: {}", id, currentUser.getEmail());
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        log.info("PUT /api/listings/{} - Updating listing for user: {}", id, userDetails.getUsername());
 
-        ListingResponse response = listingService.updateListing(id, request, currentUser);
+        ListingResponse response = listingService.updateListing(id, request, userDetails.user());
 
         return ResponseEntity.ok(response);
     }
@@ -76,10 +77,10 @@ public class MaterialListingController extends BaseController {
     @PatchMapping("/{id}/deactivate")
     public ResponseEntity<Void> deactivateListing(
             @PathVariable UUID id,
-            @AuthenticationPrincipal User currentUser) {
-        log.info("PATCH /api/listings/{}/deactivate - Deactivating listing for user: {}", id, currentUser.getEmail());
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        log.info("PATCH /api/listings/{}/deactivate - Deactivating listing for user: {}", id, userDetails.getUsername());
 
-        listingService.deactivateListing(id, currentUser);
+        listingService.deactivateListing(id, userDetails.user());
 
         return ResponseEntity.noContent().build();
     }

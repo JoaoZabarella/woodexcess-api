@@ -1,5 +1,6 @@
 package com.z.c.woodexcess_api.dto.listing;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.z.c.woodexcess_api.dto.address.AddressResponse;
 import com.z.c.woodexcess_api.dto.user.UserResponse;
 import com.z.c.woodexcess_api.enums.Condition;
@@ -26,13 +27,15 @@ public class ListingResponse {
     private BigDecimal price;
     private Integer quantity;
     private Condition condition;
+    @JsonProperty("city")
     private String city;
+    @JsonProperty("state")
     private String state;
     private ListingStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     // Nested objects
-    private UserResponse owner;
+    private ListingOwerResponse owner;
     private AddressResponse address;
 }

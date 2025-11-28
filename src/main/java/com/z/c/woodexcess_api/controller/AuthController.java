@@ -5,10 +5,8 @@ import com.z.c.woodexcess_api.dto.auth.LoginResponse;
 import com.z.c.woodexcess_api.dto.auth.RefreshTokenRequest;
 import com.z.c.woodexcess_api.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

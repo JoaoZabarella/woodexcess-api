@@ -5,6 +5,7 @@ import com.z.c.woodexcess_api.dto.listing.ListingFilterRequest;
 import com.z.c.woodexcess_api.dto.listing.ListingResponse;
 import com.z.c.woodexcess_api.dto.listing.UpdateListingRequest;
 import com.z.c.woodexcess_api.enums.ListingStatus;
+import com.z.c.woodexcess_api.enums.MaterialType;
 import com.z.c.woodexcess_api.enums.UserRole;
 import com.z.c.woodexcess_api.exception.BusinessException;
 import com.z.c.woodexcess_api.exception.address.AddressNotFoundException;
@@ -16,9 +17,11 @@ import com.z.c.woodexcess_api.model.MaterialListing;
 import com.z.c.woodexcess_api.model.User;
 import com.z.c.woodexcess_api.repository.AddressRepository;
 import com.z.c.woodexcess_api.repository.MaterialListingRepository;
+import com.z.c.woodexcess_api.specification.MaterialListingSpecification;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -152,20 +155,17 @@ public class MaterialListingService {
     public Page<ListingResponse> getAllListings(ListingFilterRequest filters, Pageable pageable) {
         log.debug("Fetching listings with filters: {}", filters);
 
-        String status = filters.getStatus() != null ? filters.getStatus().name() : ListingStatus.ACTIVE.name();
-        String materialType = filters.getMaterialType() != null ? filters.getMaterialType().name() : null;
-        String condition = filters.getCondition() != null ? filters.getCondition().name() : null;
-
-        Page<MaterialListing> listings = listingRepository.findByFilters(
-                status,
-                materialType,
+        Specification<MaterialListing> spec = MaterialListingSpecification.withFilters(
+                filters.getStatus() != null ? filters.getStatus() : ListingStatus.ACTIVE,
+                filters.getMaterialType(),
                 filters.getCity(),
                 filters.getState(),
                 filters.getMinPrice(),
                 filters.getMaxPrice(),
-                condition,
-                pageable);
+                filters.getCondition()
+        );
 
+        Page<MaterialListing> listings = listingRepository.findAll(spec, pageable);
         return listings.map(mapper::toResponse);
     }
 

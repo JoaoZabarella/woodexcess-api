@@ -1,5 +1,6 @@
 package com.z.c.woodexcess_api.security;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -30,24 +31,21 @@ public class SecurityConfig {
                                 .sessionManagement(session -> session
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                                 .authorizeHttpRequests(auth -> auth
-                                                .requestMatchers(
-                                                                "/api/auth/login",
-                                                                "/api/auth/refresh",
+                                                .requestMatchers("/api/auth/login", "/api/auth/refresh",
                                                                 "/api/users/register")
                                                 .permitAll()
-
-                                                .requestMatchers(
-                                                                "/h2-console/**",
-                                                                "/actuator/**")
-                                                .permitAll()
-
-                                                // Listings - GET público, POST/PUT/PATCH autenticado
+                                                .requestMatchers("/h2-console/**", "/actuator/**").permitAll()
                                                 .requestMatchers(org.springframework.http.HttpMethod.GET,
                                                                 "/api/listings/**")
                                                 .permitAll()
-
                                                 .anyRequest().authenticated())
-
+                                .exceptionHandling(exception -> exception
+                                                .authenticationEntryPoint((request, response, authException) -> {
+                                                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                                        response.setContentType("application/json");
+                                                        response.getWriter().write(
+                                                                        "{\"error\":\"Unauthorized\",\"message\":\"Authentication required\"}");
+                                                }))
                                 .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
                                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
