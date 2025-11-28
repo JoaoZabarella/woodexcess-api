@@ -39,17 +39,25 @@ A **micro SaaS platform** that connects woodworkers and store owners, enabling t
 - ✅ Phone number validation (Brazilian format)
 - ✅ User activation/deactivation (soft delete)
 
-### **Address Management** 🆕
+### **Address Management**
 - ✅ Multiple addresses per user (up to 5)
 - ✅ Automatic address filling via ViaCEP API
 - ✅ Primary address designation
 - ✅ Address validation (no duplicates)
 - ✅ Soft delete for addresses
 
+### **Material Listings** 🆕
+- ✅ Create, read, update, and deactivate material listings
+- ✅ Advanced filtering (material type, location, price range, condition)
+- ✅ Pagination and sorting
+- ✅ Owner/Admin authorization
+- ✅ Public listing browsing (GET endpoints)
+- ✅ Denormalized location fields for fast queries
+
 ### **Coming Soon**
-- 🔄 Material listing CRUD
-- 🔄 Search and filter for listings
+- 🔄 Image upload for listings
 - 🔄 Real-time chat between users
+- 🔄 Negotiation system
 - 🔄 Notifications system
 - 🔄 User dashboard
 
@@ -291,6 +299,115 @@ Authorization: Bearer {token}
 
 ---
 
+### **Material Listings** 🆕
+
+#### Create Listing
+POST /api/listings
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "title": "Sobra de Madeira de Lei - Ipê",
+  "description": "Tábuas de ipê em excelente estado, sobra de projeto residencial",
+  "materialType": "WOOD",
+  "price": 150.50,
+  "quantity": 10,
+  "condition": "USED",
+  "addressId": "550e8400-e29b-41d4-a716-446655440000"
+}
+
+**Response:**
+{
+  "id": "123e4567-e89b-12d3-a456-426614174000",
+  "title": "Sobra de Madeira de Lei - Ipê",
+  "description": "Tábuas de ipê em excelente estado, sobra de projeto residencial",
+  "materialType": "WOOD",
+  "price": 150.50,
+  "quantity": 10,
+  "condition": "USED",
+  "status": "ACTIVE",
+  "city": "São Paulo",
+  "state": "SP",
+  "owner": {
+    "id": "user-id",
+    "name": "John Doe",
+    "email": "john@example.com"
+  },
+  "address": {
+    "id": "address-id",
+    "street": "Rua das Flores",
+    "number": "123",
+    "city": "São Paulo",
+    "state": "SP"
+  },
+  "createdAt": "2025-11-24T10:00:00",
+  "updatedAt": "2025-11-24T10:00:00"
+}
+
+#### List Listings (with filters)
+GET /api/listings?materialType=WOOD&city=São Paulo&minPrice=100&maxPrice=200&page=0&size=10&sort=createdAt,desc
+
+**Query Parameters:**
+- `materialType` - Filter by material type (WOOD, MDF, PLYWOOD, VENEER, PARTICLE_BOARD, OTHER)
+- `condition` - Filter by condition (NEW, USED, SCRAP)
+- `status` - Filter by status (ACTIVE, INACTIVE, RESERVED, SOLD) - defaults to ACTIVE
+- `city` - Filter by city
+- `state` - Filter by state (e.g., SP, RJ)
+- `minPrice` - Minimum price
+- `maxPrice` - Maximum price
+- `page` - Page number (0-indexed)
+- `size` - Items per page
+- `sort` - Sort field and direction (e.g., createdAt,desc or price,asc)
+
+**Response:**
+{
+  "content": [
+    {
+      "id": "123e4567-e89b-12d3-a456-426614174000",
+      "title": "Sobra de Madeira de Lei - Ipê",
+      "materialType": "WOOD",
+      "price": 150.50,
+      "quantity": 10,
+      "condition": "USED",
+      "status": "ACTIVE",
+      "city": "São Paulo",
+      "state": "SP",
+      "createdAt": "2025-11-24T10:00:00"
+    }
+  ],
+  "pageable": {
+    "pageNumber": 0,
+    "pageSize": 10
+  },
+  "totalElements": 1,
+  "totalPages": 1
+}
+
+#### Get Listing by ID
+GET /api/listings/{id}
+
+#### Update Listing
+PUT /api/listings/{id}
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "title": "Título Atualizado",
+  "description": "Descrição atualizada",
+  "price": 180.00,
+  "quantity": 8
+}
+
+**Note:** Only the owner or an ADMIN can update a listing.
+
+#### Deactivate Listing
+PATCH /api/listings/{id}/deactivate
+Authorization: Bearer {token}
+
+**Note:** Only the owner or an ADMIN can deactivate a listing.
+
+---
+
 ## 🧪 Testing
 
 ### **Run all tests**
@@ -362,6 +479,7 @@ Examples:
 V1__create_users_table.sql
 V2__create_refresh_tokens_table.sql
 V3__create_addresses_table.sql
+V4__create_material_listings_table.sql
 
 ### **Run migrations manually**
 mvn flyway:migrate

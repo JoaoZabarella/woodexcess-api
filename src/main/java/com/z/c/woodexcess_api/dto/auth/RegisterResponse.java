@@ -1,8 +1,6 @@
 package com.z.c.woodexcess_api.dto.auth;
 
-import com.z.c.woodexcess_api.role.UserRole;
-
-import java.util.UUID;
+import com.z.c.woodexcess_api.enums.UserRole;
 
 public record RegisterResponse(
         String id,
@@ -10,7 +8,5 @@ public record RegisterResponse(
         String email,
         String phone,
         Boolean active,
-        UserRole role
-) {
+        UserRole role) {
 }
-

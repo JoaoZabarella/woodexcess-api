@@ -1,6 +1,6 @@
 package com.z.c.woodexcess_api.model;
 
-import com.z.c.woodexcess_api.role.UserRole;
+import com.z.c.woodexcess_api.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -43,20 +43,20 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Address> addresses = new ArrayList<>();
 
-
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt;
 
     @PrePersist
     public void prePersist() {
-        if(createdAt == null) createdAt = LocalDateTime.now();
-        if(updatedAt == null) updatedAt = LocalDateTime.now();
+        if (createdAt == null)
+            createdAt = LocalDateTime.now();
+        if (updatedAt == null)
+            updatedAt = LocalDateTime.now();
     }
 
     @PreUpdate
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
-
 
 }
