@@ -33,11 +33,6 @@ public class MaterialListingMapper {
                 .status(ListingStatus.ACTIVE)
                 .build();
 
-        if (address != null) {
-            listing.setCity(address.getCity());
-            listing.setState(address.getState());
-        }
-
         return listing;
     }
 
