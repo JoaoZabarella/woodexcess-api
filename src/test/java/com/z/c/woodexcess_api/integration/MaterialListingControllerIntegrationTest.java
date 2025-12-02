@@ -41,12 +41,18 @@ public class MaterialListingControllerIntegrationTest {
         @Autowired
         private ObjectMapper objectMapper;
 
+        @Autowired
+        private com.z.c.woodexcess_api.repository.MaterialListingRepository listingRepository;
+
         private String userToken;
         private String adminToken;
         private String addressId;
 
         @BeforeEach
         void setUp() throws Exception {
+                // Clean up database
+                listingRepository.deleteAll();
+
                 // Register and login user
                 String uniqueEmail = "user-" + UUID.randomUUID() + "@example.com";
 
