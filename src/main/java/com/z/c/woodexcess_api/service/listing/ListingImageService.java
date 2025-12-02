@@ -59,13 +59,12 @@ public class ListingImageService {
         logger.debug("File details: name={}, size={} bytes, type={}",
                 file.getOriginalFilename(), file.getSize(), file.getContentType());
 
+        logger.debug("Finding listing by ID: {}", listingId);
+        MaterialListing listing = findListingOrThrow(listingId);
+        logger.debug("Listing found : {}", listing.getTitle());
+
         try {
 
-            logger.debug("Finding listing by ID: {}", listingId);
-            MaterialListing listing = findListingOrThrow(listingId);
-            logger.debug("Listing found: {}", listing.getTitle());
-
-            // 2. Validate image
             logger.debug("Validating image file");
             imageValidator.validate(file);
             logger.debug("Image validation passed");
@@ -74,24 +73,47 @@ public class ListingImageService {
             validateImageLimit(listing);
             logger.debug("Image limit check passed");
 
-            logger.info("Uploading original image to S3");
-            String imageKey = storageService.upload(file, "listings/images");
-            logger.info("Original image uploaded successfully: {}", imageKey);
+            String imageKey;
+            try {
+                logger.info("Uploading original image to S3");
+                imageKey = storageService.upload(file, "listings/images");
+                logger.info("Original image uploaded successfully: {}", imageKey);
+            } catch (Exception e) {
+                logger.error("Failed to upload original image to S3 for listing {}: {}", listingId, e.getMessage(), e);
+                throw new ListingImageException("Failed to upload image to storage", e);
+            }
+
 
             String imageUrl = storageService.getPubliUrl(imageKey);
             logger.debug("Generated image URL: {}", imageUrl);
 
-            logger.info("Generating thumbnail from uploaded image");
-            byte[] thumbnailBytes = imageProcessor.generateThumbnail(file.getBytes());
-            logger.info("Thumbnail generated successfully: {} bytes", thumbnailBytes.length);
 
-            MultipartFile thumbnailFile = imageProcessor.createMultipartFile(
-                    thumbnailBytes,
-                    "thumbnail-" + file.getOriginalFilename());
+            byte[] thumbnailBytes;
 
-            logger.info("Uploading thumbnail to S3");
-            String thumbnailKey = storageService.upload(thumbnailFile, "listings/thumbnails");
-            logger.info("Thumbnail uploaded successfully: {}", thumbnailKey);
+            String thumbnailKey;
+            try {
+                logger.info("Generating thumbnail from uploaded image");
+                thumbnailBytes = imageProcessor.generateThumbnail(file.getBytes());
+                logger.info("Thumbnail generated successfully: {} bytes", thumbnailBytes.length);
+
+                MultipartFile thumbnailFile = imageProcessor.createMultipartFile(
+                        thumbnailBytes,
+                        "thumbnail-" + file.getOriginalFilename());
+
+                logger.info("Uploading thumbnail to S3");
+                thumbnailKey = storageService.upload(thumbnailFile, "listings/thumbnails");
+                logger.info("Thumbnail uploaded successfully: {}", thumbnailKey);
+            } catch (IOException e) {
+                logger.error("Failed to generate thumbnail for listing {}: {}", listingId, e.getMessage(), e);
+                try {
+                    storageService.delete(imageKey);
+                } catch (Exception rollBackEx) {
+                    logger.error("Failed to rollback image upload: {}", rollBackEx.getMessage());
+                }
+
+                throw new ListingImageException("Failed to upload thumbnail to storage", e);
+            }
+
 
             String thumbnailUrl = storageService.getPubliUrl(thumbnailKey);
             logger.debug("Generated thumbnail URL: {}", thumbnailUrl);
@@ -114,15 +136,12 @@ public class ListingImageService {
 
             return imageMapper.toResponse(image);
 
-        } catch (IOException e) {
-            logger.error("IOException during image processing for listing {}: {}", listingId, e.getMessage(), e);
-            throw new ListingNotFoundException(e.getMessage());
         } catch (ListingImageException e) {
             logger.error("ListingImageException for listing {}: {}", listingId, e.getMessage(), e);
             throw e;
         } catch (Exception e) {
             logger.error("Unexpected error during image processing for listing {}: {}", listingId, e.getMessage(), e);
-            throw new ListingNotFoundException(e.getMessage());
+            throw new ListingImageException("Unexpected error processing image", e);
         }
     }
 

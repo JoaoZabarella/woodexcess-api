@@ -224,16 +224,15 @@ class ListingImageServiceTest {
     }
 
     @Test
-    @DisplayName("Should throw ListingImageException when listing not found")
+    @DisplayName("Should throw ListingNotFoundException when listing not found")
     void addImage_ListingNotFound_ThrowsException() throws Exception {
         // Arrange
         when(listingRepository.findById(listingId)).thenReturn(Optional.empty());
 
         // Act & Assert
         assertThatThrownBy(() -> listingImageService.addImage(listingId, mockFile, true))
-                .isInstanceOf(ListingImageException.class)
-                .hasMessageContaining("Failed to process image")
-                .hasCauseInstanceOf(ListingNotFoundException.class);
+                .isInstanceOf(ListingNotFoundException.class)
+                .hasMessageContaining("Listing not found");
 
         verify(imageValidator, never()).validate(any());
         verify(storageService, never()).upload(any(), anyString());
@@ -286,9 +285,11 @@ class ListingImageServiceTest {
         // Act & Assert
         assertThatThrownBy(() -> listingImageService.addImage(listingId, mockFile, true))
                 .isInstanceOf(ListingImageException.class)
-                .hasMessageContaining("Failed to read image file");
+                .hasMessageContaining("Failed to upload thumbnail to storage")
+                .hasCauseInstanceOf(IOException.class);
 
-        verify(imageRepository, never()).save(any());
+
+        verify(storageService).delete("original-key");
     }
 
     @Test
@@ -304,10 +305,9 @@ class ListingImageServiceTest {
         // Act & Assert
         assertThatThrownBy(() -> listingImageService.addImage(listingId, mockFile, true))
                 .isInstanceOf(ListingImageException.class)
-                .hasMessageContaining("Failed to process image");
+                .hasMessageContaining("Failed to upload image to storage");
     }
 
-    // ==================== DELETE IMAGE TESTS ====================
 
     @Test
     @DisplayName("Should delete image successfully")
