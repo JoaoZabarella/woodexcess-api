@@ -14,15 +14,15 @@ public class AddressMapper {
     public Address toEntity(AddressRequest dto, User user) {
         return Address.builder()
                 .user(user)
-                .street(dto.getStreet())
-                .number(dto.getNumber())
-                .complement(dto.getComplement())
-                .district(dto.getDistrict())
-                .city(dto.getCity())
-                .state(dto.getState().toUpperCase())
-                .zipCode(formatZipCode(dto.getZipCode()))
-                .country(dto.getCountry() != null ? dto.getCountry() : "Brasil")
-                .isPrimary(dto.getIsPrimary() != null ? dto.getIsPrimary() : false)
+                .street(dto.street())
+                .number(dto.number())
+                .complement(dto.complement())
+                .district(dto.district())
+                .city(dto.city())
+                .state(dto.state().toUpperCase())
+                .zipCode(formatZipCode(dto.zipCode()))
+                .country(dto.country() != null ? dto.country() : "Brasil")
+                .isPrimary(dto.isPrimary() != null ? dto.isPrimary() : false)
                 .active(true)
                 .build();
     }
@@ -30,15 +30,15 @@ public class AddressMapper {
     public Address toEntityFromCep(ViaCepResponse viaCep, AddressFromCepRequest dto, User user) {
         return Address.builder()
                 .user(user)
-                .street(viaCep.getStreet())
-                .number(dto.getNumber())
-                .complement(dto.getComplement())
-                .district(viaCep.getDistrict())
-                .city(viaCep.getCity())
-                .state(viaCep.getState().toUpperCase())
-                .zipCode(viaCep.getCep())
+                .street(viaCep.street())
+                .number(dto.number())
+                .complement(dto.complement())
+                .district(viaCep.district())
+                .city(viaCep.city())
+                .state(viaCep.state().toUpperCase())
+                .zipCode(viaCep.cep())
                 .country("Brasil")
-                .isPrimary(dto.getIsPrimary() != null ? dto.getIsPrimary() : false)
+                .isPrimary(dto.isPrimary() != null ? dto.isPrimary() : false)
                 .active(true)
                 .build();
     }
@@ -64,16 +64,16 @@ public class AddressMapper {
     }
 
     public void updateEntity(Address address, AddressRequest dto) {
-        address.setStreet(dto.getStreet());
-        address.setNumber(dto.getNumber());
-        address.setComplement(dto.getComplement());
-        address.setDistrict(dto.getDistrict());
-        address.setCity(dto.getCity());
-        address.setState(dto.getState().toUpperCase());
-        address.setZipCode(formatZipCode(dto.getZipCode()));
+        address.setStreet(dto.street());
+        address.setNumber(dto.number());
+        address.setComplement(dto.complement());
+        address.setDistrict(dto.district());
+        address.setCity(dto.city());
+        address.setState(dto.state().toUpperCase());
+        address.setZipCode(formatZipCode(dto.zipCode()));
 
-        if (dto.getCountry() != null) {
-            address.setCountry(dto.getCountry());
+        if (dto.country() != null) {
+            address.setCountry(dto.country());
         }
     }
 

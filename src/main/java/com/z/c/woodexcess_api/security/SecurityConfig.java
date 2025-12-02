@@ -34,7 +34,9 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/auth/login", "/api/auth/refresh",
                                                                 "/api/users/register")
                                                 .permitAll()
-                                                .requestMatchers("/h2-console/**", "/actuator/**").permitAll()
+                                                .requestMatchers("/h2-console/**", "/actuator/**",
+                                                                "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
+                                                .permitAll()
                                                 .requestMatchers(org.springframework.http.HttpMethod.GET,
                                                                 "/api/listings/**")
                                                 .permitAll()

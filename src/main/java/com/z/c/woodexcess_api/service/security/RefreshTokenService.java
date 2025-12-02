@@ -1,4 +1,4 @@
-package com.z.c.woodexcess_api.service;
+package com.z.c.woodexcess_api.service.security;
 
 import com.z.c.woodexcess_api.dto.auth.TokenRotationResult;
 import com.z.c.woodexcess_api.exception.auth.RefreshTokenException;
@@ -60,7 +60,7 @@ public class RefreshTokenService {
         RefreshToken refreshToken = RefreshToken.builder()
                 .user(user)
                 .tokenHash(tokenHash)
-                .userAgent(request.getHeader("User-Agent"))
+                .userAgent(extractUserAgent(request))
                 .ipAddress(getClientIp(request))
                 .expiresAt(LocalDateTime.now().plusSeconds(jwtProvider.getRefreshTokenExpiration() / 1000))
                 .build();
@@ -70,6 +70,8 @@ public class RefreshTokenService {
         logger.info("Refresh token created for user: {} from IP: {}", user.getEmail(), refreshToken.getIpAddress());
         return token;
     }
+
+
 
     @Transactional
     public TokenRotationResult validateAndRotate(String token, HttpServletRequest request) {
@@ -148,9 +150,7 @@ public class RefreshTokenService {
                 .build();
     }
 
-    /**
-     * ✅ Limite de dispositivos
-     */
+
     private void enforceDeviceLimit(UUID userId) {
         long activeTokens = repository.countActiveTokensByUserId(userId, LocalDateTime.now());
 
@@ -219,6 +219,12 @@ public class RefreshTokenService {
             ip = ip.split(",")[0].trim();
         }
 
-        return ip != null ? ip : "unknown"; // Nunca retornar null
+        return ip != null ? ip : "unknown";
     }
+
+    public String extractUserAgent(HttpServletRequest request) {
+        String userAgent = request.getHeader("User-Agent");
+        return (userAgent == null || userAgent.isEmpty()) ? "Unknown" : userAgent;
+    }
+
 }

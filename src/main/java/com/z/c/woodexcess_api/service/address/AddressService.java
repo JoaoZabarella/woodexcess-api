@@ -38,11 +38,11 @@ public class AddressService {
 
         User user = userService.findEntityById(userId);
         validateMaxAddresses(userId);
-        validateDuplicateAddress(userId, request.getZipCode(), request.getNumber());
+        validateDuplicateAddress(userId, request.zipCode(), request.number());
 
         Address address = addressMapper.toEntity(request, user);
 
-        if (Boolean.TRUE.equals(request.getIsPrimary())) {
+        if (Boolean.TRUE.equals(request.isPrimary())) {
             removePrimaryFromAllAddresses(userId);
         }
 
@@ -54,17 +54,17 @@ public class AddressService {
 
     @Transactional
     public AddressResponse createFromCep(UUID userId, AddressFromCepRequest request) {
-        log.info("Creating address from CEP {} for user {}", request.getZipCode(), userId);
+        log.info("Creating address from CEP {} for user {}", request.zipCode(), userId);
 
         User user = userService.findEntityById(userId);
         validateMaxAddresses(userId);
-        validateDuplicateAddress(userId, request.getZipCode(), request.getNumber());
+        validateDuplicateAddress(userId, request.zipCode(), request.number());
 
-        ViaCepResponse viaCepData = cepService.findAddressByCep(request.getZipCode());
+        ViaCepResponse viaCepData = cepService.findAddressByCep(request.zipCode());
 
         Address address = addressMapper.toEntityFromCep(viaCepData, request, user);
 
-        if (Boolean.TRUE.equals(request.getIsPrimary())) {
+        if (Boolean.TRUE.equals(request.isPrimary())) {
             removePrimaryFromAllAddresses(userId);
         }
 
@@ -106,9 +106,9 @@ public class AddressService {
 
         Address address = findEntityById(id);
 
-        if (!address.getZipCode().equals(formatZipCode(request.getZipCode())) ||
-                !address.getNumber().equals(request.getNumber())) {
-            validateDuplicateAddress(address.getUser().getId(), request.getZipCode(), request.getNumber());
+        if (!address.getZipCode().equals(formatZipCode(request.zipCode())) ||
+                !address.getNumber().equals(request.number())) {
+            validateDuplicateAddress(address.getUser().getId(), request.zipCode(), request.number());
         }
 
         addressMapper.updateEntity(address, request);
