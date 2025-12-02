@@ -1,0 +1,88 @@
+# ==============================================================================
+# WOODEXCESS API - Test Environment (Testcontainers PostgreSQL)
+# ==============================================================================
+
+spring:
+  datasource:
+    # ? URL CORRETA do Testcontainers
+    url: jdbc:tc:postgresql:16-alpine:///testdb
+    username: test
+    password: test
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+  
+  # JPA
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+  
+  # Flyway
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
+  # Spring Cloud
+  cloud:
+    compatibility-verifier:
+      enabled: false
+
+  # Cache
+  cache:
+    type: simple
+
+# JWT Test
+jwt:
+  secret: ${JWT_SECRET:d428cb12c786f4fed33f674b12fb9efa4a02aecc293681dcaeec923dd7a1be48f3e9a7e061648382b2be8826436f8773bc174730b354fdf6c59d4bb330398a49}
+  access-expiration-ms: 900000
+  refresh-expiration-ms: 604800000
+
+security:
+  # Refresh Token Security
+  refresh-token:
+    max-devices: 5
+    rotation-enabled: true
+    validate-context: true
+    reuse-detection: true
+  
+  # Rate Limiting
+  login:
+    rate-limit:
+      capacity: 999999
+      refill-tokens: 999999
+      refill-minutes: 1
+
+# Logging
+logging:
+  level:
+    org.hibernate.SQL: WARN
+    org.springframework: WARN
+    com.z.c.woodexcess_api: INFO
+    org.testcontainers: INFO
+    com.github.dockerjava: WARN
+    tc.postgres: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+# ViaCEP
+viacep:
+  url: https://viacep.com.br/ws
+
+# Feign
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
+
+# Mock AWS para testes
+aws:
+  s3:
+    bucket-name: test-bucket
+    region: us-east-1
+  access-key-id: test-key
+  secret-access-key: test-secret
