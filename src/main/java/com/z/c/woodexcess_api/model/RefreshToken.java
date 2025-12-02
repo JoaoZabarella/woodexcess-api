@@ -36,6 +36,7 @@ public class RefreshToken {
     private LocalDateTime expiresAt;
 
     @Column(nullable = false)
+    @Builder.Default
     private Boolean revoked = false;
 
     @Column(name = "replaced_by_token")
@@ -60,7 +61,6 @@ public class RefreshToken {
     public boolean isValid() {
         return !this.revoked && !this.isExpired();
     }
-
 
     public boolean matchesContext(String userAgent, String ipAddress) {
         boolean userAgentMatches = this.userAgent != null && this.userAgent.equals(userAgent);

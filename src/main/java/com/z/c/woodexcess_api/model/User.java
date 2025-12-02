@@ -38,11 +38,14 @@ public class User {
     private String phone;
 
     @Column(nullable = false)
+    @Builder.Default
     private Boolean active = true;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
     private List<Address> addresses = new ArrayList<>();
 
+    @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt;
 

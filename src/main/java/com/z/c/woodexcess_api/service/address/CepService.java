@@ -31,7 +31,7 @@ public class CepService {
             }
 
             log.info("[VIACEP] CEP {} encontrado com sucesso: {}, {}-{}",
-                    normalized, response.getCity(), response.getDistrict(), response.getState());
+                    normalized, response.city(), response.district(), response.state());
             return response;
 
         } catch (Exception e) {

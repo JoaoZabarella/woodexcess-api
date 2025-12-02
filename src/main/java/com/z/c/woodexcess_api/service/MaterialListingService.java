@@ -156,14 +156,13 @@ public class MaterialListingService {
         log.debug("Fetching listings with filters: {}", filters);
 
         Specification<MaterialListing> spec = MaterialListingSpecification.withFilters(
-                filters.getStatus() != null ? filters.getStatus() : ListingStatus.ACTIVE,
-                filters.getMaterialType(),
-                filters.getCity(),
-                filters.getState(),
-                filters.getMinPrice(),
-                filters.getMaxPrice(),
-                filters.getCondition()
-        );
+                filters.status() != null ? filters.status() : ListingStatus.ACTIVE,
+                filters.materialType(),
+                filters.city(),
+                filters.state(),
+                filters.minPrice(),
+                filters.maxPrice(),
+                filters.condition());
 
         Page<MaterialListing> listings = listingRepository.findAll(spec, pageable);
         return listings.map(mapper::toResponse);
