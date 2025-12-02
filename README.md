@@ -1,7 +1,7 @@
 # 🪵 WoodExcess API
 
 [![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://www.oracle.com/java/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.5-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.6-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![CI/CD](https://github.com/JoaoZabarella/woodexcess-api/actions/workflows/ci.yml/badge.svg)](https://github.com/JoaoZabarella/woodexcess-api/actions)
 
@@ -46,8 +46,9 @@ A **micro SaaS platform** that connects woodworkers and store owners, enabling t
 - ✅ Address validation (no duplicates)
 - ✅ Soft delete for addresses
 
-### **Material Listings** 🆕
+### **Material Listings**
 - ✅ Create, read, update, and deactivate material listings
+- ✅ **Image Upload**: Upload, manage, and reorder listing images (AWS S3 integration)
 - ✅ Advanced filtering (material type, location, price range, condition)
 - ✅ Pagination and sorting
 - ✅ Owner/Admin authorization
@@ -55,7 +56,6 @@ A **micro SaaS platform** that connects woodworkers and store owners, enabling t
 - ✅ Denormalized location fields for fast queries
 
 ### **Coming Soon**
-- 🔄 Image upload for listings
 - 🔄 Real-time chat between users
 - 🔄 Negotiation system
 - 🔄 Notifications system
@@ -67,7 +67,7 @@ A **micro SaaS platform** that connects woodworkers and store owners, enabling t
 
 ### **Core**
 - **Java 21** (LTS)
-- **Spring Boot 3.3.5**
+- **Spring Boot 3.3.6**
 - **Maven** (dependency management)
 
 ### **Frameworks & Libraries**
@@ -77,6 +77,7 @@ A **micro SaaS platform** that connects woodworkers and store owners, enabling t
 - **Spring Validation** - Bean validation
 - **Spring Cloud OpenFeign** - HTTP client for ViaCEP integration
 - **Spring Cache** - Caching support
+- **SpringDoc OpenAPI** - Swagger UI & API Documentation
 
 ### **Database**
 - **PostgreSQL 16** (production)
@@ -87,6 +88,10 @@ A **micro SaaS platform** that connects woodworkers and store owners, enabling t
 - **JWT** (JSON Web Tokens)
 - **BCrypt** - Password hashing
 - **Bucket4j** - Rate limiting
+
+### **Cloud & Storage**
+- **AWS S3** - Image storage
+- **Thumbnailator** - Image processing & resizing
 
 ### **Utilities**
 - **Lombok** - Reduce boilerplate code
@@ -110,27 +115,30 @@ A **micro SaaS platform** that connects woodworkers and store owners, enabling t
 
 ## 🏗 Architecture
 
+```
 src/
 ├── main/
-│ ├── java/com/z/c/woodexcess_api/
-│ │ ├── config/ # Configuration classes
-│ │ ├── controller/ # REST endpoints
-│ │ ├── dto/ # Data Transfer Objects
-│ │ ├── exception/ # Custom exceptions & handlers
-│ │ ├── mapper/ # MapStruct mappers
-│ │ ├── model/ # JPA entities
-│ │ ├── repository/ # Spring Data repositories
-│ │ ├── security/ # Security filters & configs
-│ │ └── service/ # Business logic
-│ └── resources/
-│ ├── db/migration/ # Flyway migrations
-│ └── application.properties
+│   ├── java/com/z/c/woodexcess_api/
+│   │   ├── config/         # Configuration classes
+│   │   ├── controller/     # REST endpoints
+│   │   ├── dto/            # Data Transfer Objects
+│   │   ├── exception/      # Custom exceptions & handlers
+│   │   ├── mapper/         # MapStruct mappers
+│   │   ├── model/          # JPA entities
+│   │   ├── repository/     # Spring Data repositories
+│   │   ├── security/       # Security filters & configs
+│   │   └── service/        # Business logic
+│   └── resources/
+│       ├── db/migration/   # Flyway migrations
+│       └── application.yml
 └── test/
-├── java/
-│ ├── integration/ # Integration tests
-│ └── service/ # Unit tests
-└── resources/
-└── application-test.properties
+    ├── java/
+    │   ├── integration/    # Integration tests
+    │   └── service/        # Unit tests
+    └── resources/
+        └── application-test.yml
+```
+
 ---
 
 ## 🚀 Getting Started
@@ -142,54 +150,71 @@ src/
 - PostgreSQL 16+ (production) ([Download](https://www.postgresql.org/download/))
 
 ### **1. Clone the repository**
+```bash
 git clone https://github.com/JoaoZabarella/woodexcess-api.git
 cd woodexcess-api
+```
 
 ### **2. Configure database**
 
 **Option A: Docker (recommended for development)**
-docker run -d
---name woodexcess-postgres
--e POSTGRES_DB=woodexcess
--e POSTGRES_USER=postgres
--e POSTGRES_PASSWORD=postgres
--p 5432:5432
-postgres:16-alpine
+```bash
+docker run -d \
+  --name woodexcess-postgres \
+  -e POSTGRES_DB=woodexcess \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -p 5432:5432 \
+  postgres:16-alpine
+```
 
 **Option B: Local PostgreSQL**
-
+```sql
 CREATE DATABASE woodexcess;
+```
 
 ### **3. Configure environment variables**
 
 Create a `.env` file or set environment variables:
 
-Database
+```properties
+# Database
 SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/woodexcess
 SPRING_DATASOURCE_USERNAME=postgres
 SPRING_DATASOURCE_PASSWORD=postgres
 
-JWT
+# JWT
 JWT_SECRET=your-secret-key-min-256-bits-long-replace-this-in-production
 JWT_ACCESS_EXPIRATION_MS=900000
 JWT_REFRESH_EXPIRATION_MS=604800000
 
-ViaCEP
+# ViaCEP
 VIACEP_URL=https://viacep.com.br/ws
+
+# AWS S3 (For Image Upload)
+AWS_ACCESS_KEY_ID=your-access-key
+AWS_SECRET_ACCESS_KEY=your-secret-key
+AWS_S3_BUCKET=woodexcess-listings
+AWS_REGION=us-east-1
+```
 
 ### **4. Run the application**
 
 **Using Maven:**
+```bash
+mvn spring-boot:run
+```
 
 **Using Docker:**
-
+```bash
 docker build -t woodexcess-api .
 docker run -p 8080:8080 woodexcess-api
-
+```
 
 ### **5. Access the API**
-- **Base URL:** http://localhost:8080
-- **Health Check:** http://localhost:8080/actuator/health
+- **Base URL:** `http://localhost:8080`
+- **Swagger UI:** `http://localhost:8080/swagger-ui.html`
+- **Health Check:** `http://localhost:8080/actuator/health`
 
 ---
 
@@ -198,224 +223,81 @@ docker run -p 8080:8080 woodexcess-api
 ### **Authentication**
 
 #### Register
-
-POST /api/users/register
-Content-Type: application/json
-
+`POST /api/users/register`
+```json
 {
-"name": "John Doe",
-"email": "john@example.com",
-"phone": "11987654321",
-"password": "StrongPass123!@#"
+  "name": "John Doe",
+  "email": "john@example.com",
+  "phone": "11987654321",
+  "password": "StrongPass123!@#"
 }
+```
 
 #### Login
-POST /api/auth/login
-Content-Type: application/json
-
+`POST /api/auth/login`
+```json
 {
-"email": "john@example.com",
-"password": "StrongPass123!@#"
+  "email": "john@example.com",
+  "password": "StrongPass123!@#"
 }
-
-**Response:**
-{
-"accessToken": "eyJhbGciOiJIUzUxMiJ9...",
-"refreshToken": "550e8400-e29b-41d4-a716-446655440000",
-"type": "Bearer",
-"expiresIn": 900000
-}
+```
 
 #### Refresh Token
-POST /api/auth/refresh
-Content-Type: application/json
-
-{
-"refreshToken": "550e8400-e29b-41d4-a716-446655440000"
-}
+`POST /api/auth/refresh`
 
 ---
 
-### **Address Management** 🆕
+### **Address Management**
 
-#### Create Address (Manual)
-POST /api/addresses
-Authorization: Bearer {token}
-Content-Type: application/json
-
-{
-"street": "Rua das Flores",
-"number": "123",
-"complement": "Apto 45",
-"district": "Centro",
-"city": "São Paulo",
-"state": "SP",
-"zipCode": "01310-100",
-"country": "Brasil",
-"isPrimary": true
-}
-
-#### Create Address (via CEP - ViaCEP)
-POST /api/addresses/from-cep
-Authorization: Bearer {token}
-Content-Type: application/json
-
-{
-"zipCode": "01310-100",
-"number": "456",
-"complement": "Bloco B",
-"isPrimary": true
-}
-
-#### List User Addresses
-GET /api/addresses
-Authorization: Bearer {token}
-
-#### Get Primary Address
-GET /api/addresses/primary
-Authorization: Bearer {token}
-
-#### Update Address
-PUT /api/addresses/{id}
-Authorization: Bearer {token}
-Content-Type: application/json
-
-{
-"street": "Rua Atualizada",
-"number": "789",
-"district": "Jardins",
-"city": "São Paulo",
-"state": "SP",
-"zipCode": "01310-100"
-}
-
-#### Set as Primary
-PATCH /api/addresses/{id}/set-primary
-Authorization: Bearer {token}
-
-#### Delete Address (Soft Delete)
-DELETE /api/addresses/{id}
-Authorization: Bearer {token}
+- `POST /api/addresses` - Create Address (Manual)
+- `POST /api/addresses/from-cep` - Create Address (via ViaCEP)
+- `GET /api/addresses` - List User Addresses
+- `GET /api/addresses/primary` - Get Primary Address
+- `PUT /api/addresses/{id}` - Update Address
+- `PATCH /api/addresses/{id}/set-primary` - Set as Primary
+- `DELETE /api/addresses/{id}` - Delete Address
 
 ---
 
-### **Material Listings** 🆕
+### **Material Listings**
 
 #### Create Listing
-POST /api/listings
-Authorization: Bearer {token}
-Content-Type: application/json
-
+`POST /api/listings`
+```json
 {
   "title": "Sobra de Madeira de Lei - Ipê",
-  "description": "Tábuas de ipê em excelente estado, sobra de projeto residencial",
+  "description": "Tábuas de ipê em excelente estado",
   "materialType": "WOOD",
   "price": 150.50,
   "quantity": 10,
   "condition": "USED",
-  "addressId": "550e8400-e29b-41d4-a716-446655440000"
+  "addressId": "address-uuid"
 }
-
-**Response:**
-{
-  "id": "123e4567-e89b-12d3-a456-426614174000",
-  "title": "Sobra de Madeira de Lei - Ipê",
-  "description": "Tábuas de ipê em excelente estado, sobra de projeto residencial",
-  "materialType": "WOOD",
-  "price": 150.50,
-  "quantity": 10,
-  "condition": "USED",
-  "status": "ACTIVE",
-  "city": "São Paulo",
-  "state": "SP",
-  "owner": {
-    "id": "user-id",
-    "name": "John Doe",
-    "email": "john@example.com"
-  },
-  "address": {
-    "id": "address-id",
-    "street": "Rua das Flores",
-    "number": "123",
-    "city": "São Paulo",
-    "state": "SP"
-  },
-  "createdAt": "2025-11-24T10:00:00",
-  "updatedAt": "2025-11-24T10:00:00"
-}
+```
 
 #### List Listings (with filters)
-GET /api/listings?materialType=WOOD&city=São Paulo&minPrice=100&maxPrice=200&page=0&size=10&sort=createdAt,desc
+`GET /api/listings?materialType=WOOD&city=São Paulo&minPrice=100`
 
-**Query Parameters:**
-- `materialType` - Filter by material type (WOOD, MDF, PLYWOOD, VENEER, PARTICLE_BOARD, OTHER)
-- `condition` - Filter by condition (NEW, USED, SCRAP)
-- `status` - Filter by status (ACTIVE, INACTIVE, RESERVED, SOLD) - defaults to ACTIVE
-- `city` - Filter by city
-- `state` - Filter by state (e.g., SP, RJ)
-- `minPrice` - Minimum price
-- `maxPrice` - Maximum price
-- `page` - Page number (0-indexed)
-- `size` - Items per page
-- `sort` - Sort field and direction (e.g., createdAt,desc or price,asc)
-
-**Response:**
-{
-  "content": [
-    {
-      "id": "123e4567-e89b-12d3-a456-426614174000",
-      "title": "Sobra de Madeira de Lei - Ipê",
-      "materialType": "WOOD",
-      "price": 150.50,
-      "quantity": 10,
-      "condition": "USED",
-      "status": "ACTIVE",
-      "city": "São Paulo",
-      "state": "SP",
-      "createdAt": "2025-11-24T10:00:00"
-    }
-  ],
-  "pageable": {
-    "pageNumber": 0,
-    "pageSize": 10
-  },
-  "totalElements": 1,
-  "totalPages": 1
-}
-
-#### Get Listing by ID
-GET /api/listings/{id}
-
-#### Update Listing
-PUT /api/listings/{id}
-Authorization: Bearer {token}
-Content-Type: application/json
-
-{
-  "title": "Título Atualizado",
-  "description": "Descrição atualizada",
-  "price": 180.00,
-  "quantity": 8
-}
-
-**Note:** Only the owner or an ADMIN can update a listing.
-
-#### Deactivate Listing
-PATCH /api/listings/{id}/deactivate
-Authorization: Bearer {token}
-
-**Note:** Only the owner or an ADMIN can deactivate a listing.
+#### Listing Images
+- `POST /api/listings/{listingId}/images` - Upload image (Multipart)
+- `GET /api/listings/{listingId}/images` - Get all images
+- `PUT /api/listings/{listingId}/images/{imageId}/primary` - Set image as primary
+- `PUT /api/listings/{listingId}/images/reorder` - Reorder images
+- `DELETE /api/listings/{listingId}/images/{imageId}` - Delete image
 
 ---
 
 ## 🧪 Testing
 
 ### **Run all tests**
+```bash
 mvn clean test
+```
 
 ### **Run with coverage**
+```bash
 mvn clean test jacoco:report
-
+```
 View report: `target/site/jacoco/index.html`
 
 ### **Test structure**
@@ -465,6 +347,10 @@ View report: `target/site/jacoco/index.html`
 | `JWT_ACCESS_EXPIRATION_MS` | Access token expiration | `900000` (15 min) |
 | `JWT_REFRESH_EXPIRATION_MS` | Refresh token expiration | `604800000` (7 days) |
 | `VIACEP_URL` | ViaCEP API base URL | `https://viacep.com.br/ws` |
+| `AWS_ACCESS_KEY_ID` | AWS Access Key | - |
+| `AWS_SECRET_ACCESS_KEY` | AWS Secret Key | - |
+| `AWS_S3_BUCKET` | S3 Bucket Name | `woodexcess-listings` |
+| `AWS_REGION` | AWS Region | `us-east-1` |
 
 ---
 
@@ -473,16 +359,12 @@ View report: `target/site/jacoco/index.html`
 Migrations are managed by **Flyway** and located in `src/main/resources/db/migration/`.
 
 ### **Migration naming convention**
-V{version}__{description}.sql
-
-Examples:
-V1__create_users_table.sql
-V2__create_refresh_tokens_table.sql
-V3__create_addresses_table.sql
-V4__create_material_listings_table.sql
+`V{version}__{description}.sql`
 
 ### **Run migrations manually**
+```bash
 mvn flyway:migrate
+```
 
 ---
 
@@ -524,4 +406,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **Developed with ❤️ for sustainable woodworking practices.**
-
