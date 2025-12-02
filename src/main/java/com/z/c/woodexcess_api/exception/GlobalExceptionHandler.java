@@ -4,7 +4,9 @@ import com.z.c.woodexcess_api.dto.error.ErrorResponse;
 import com.z.c.woodexcess_api.exception.address.AddressNotFoundException;
 import com.z.c.woodexcess_api.exception.auth.RefreshTokenException;
 import com.z.c.woodexcess_api.exception.auth.TokenReuseDetectedException;
-import com.z.c.woodexcess_api.exception.users.EmailAlredyExistException;
+import com.z.c.woodexcess_api.exception.listing.*;
+import com.z.c.woodexcess_api.exception.storage.FileStorageException;
+import com.z.c.woodexcess_api.exception.users.EmailAlreadyExistException;
 import com.z.c.woodexcess_api.exception.users.PasswordIncorrectException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,7 +18,9 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,9 +32,9 @@ public class GlobalExceptionHandler {
     /**
      * Handler para email já existente (409 Conflict)
      */
-    @ExceptionHandler(EmailAlredyExistException.class)
+    @ExceptionHandler(EmailAlreadyExistException.class)
     public ResponseEntity<ErrorResponse> handleEmailAlreadyExists(
-            EmailAlredyExistException ex, HttpServletRequest request) {
+            EmailAlreadyExistException ex, HttpServletRequest request) {
 
         logger.warn("Email already exists: {}", ex.getMessage());
 
@@ -39,7 +43,7 @@ public class GlobalExceptionHandler {
                 .error("Conflict")
                 .message(ex.getMessage())
                 .path(request.getRequestURI())
-                .timestamp(java.time.LocalDateTime.now())
+                .timestamp(LocalDateTime.now())
                 .build();
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
@@ -59,7 +63,7 @@ public class GlobalExceptionHandler {
                 .error("Unauthorized")
                 .message(ex.getMessage())
                 .path(request.getRequestURI())
-                .timestamp(java.time.LocalDateTime.now())
+                .timestamp(LocalDateTime.now())
                 .build();
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
@@ -79,7 +83,7 @@ public class GlobalExceptionHandler {
                 .error("Unauthorized")
                 .message(ex.getMessage())
                 .path(request.getRequestURI())
-                .timestamp(java.time.LocalDateTime.now())
+                .timestamp(LocalDateTime.now())
                 .build();
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
@@ -99,7 +103,7 @@ public class GlobalExceptionHandler {
                 .error("Unauthorized")
                 .message(ex.getMessage())
                 .path(request.getRequestURI())
-                .timestamp(java.time.LocalDateTime.now())
+                .timestamp(LocalDateTime.now())
                 .build();
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
@@ -119,7 +123,7 @@ public class GlobalExceptionHandler {
                 .error("Security Alert")
                 .message(ex.getMessage())
                 .path(request.getRequestURI())
-                .timestamp(java.time.LocalDateTime.now())
+                .timestamp(LocalDateTime.now())
                 .build();
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
@@ -139,7 +143,7 @@ public class GlobalExceptionHandler {
                 .error("Not Found")
                 .message(ex.getMessage())
                 .path(request.getRequestURI())
-                .timestamp(java.time.LocalDateTime.now())
+                .timestamp(LocalDateTime.now())
                 .build();
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
@@ -170,7 +174,7 @@ public class GlobalExceptionHandler {
                 .error("Validation Failed")
                 .message("Invalid input data. Check 'validationErrors' for details.")
                 .path(request.getRequestURI())
-                .timestamp(java.time.LocalDateTime.now())
+                .timestamp(LocalDateTime.now())
                 .validationErrors(validationErrors)
                 .build();
 
@@ -191,7 +195,7 @@ public class GlobalExceptionHandler {
                 .error("Bad Request")
                 .message(ex.getMessage())
                 .path(request.getRequestURI())
-                .timestamp(java.time.LocalDateTime.now())
+                .timestamp(LocalDateTime.now())
                 .build();
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
@@ -212,22 +216,138 @@ public class GlobalExceptionHandler {
                 .error("Internal Server Error")
                 .message("An unexpected error occurred. Please contact support.")
                 .path(request.getRequestURI())
-                .timestamp(java.time.LocalDateTime.now())
+                .timestamp(LocalDateTime.now())
                 .build();
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
 
+    /**
+     * Handler Erro ao procurar email e não localizar (404 Not Found)
+     */
+
     @ExceptionHandler(AddressNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleAddressNotFound(AddressNotFoundException ex, HttpServletRequest request) {
-        logger.error("Address not found: {}", ex.getMessage());
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.NOT_FOUND.value(),
-                "Not Found",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+        logger.warn("Address not found: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.NOT_FOUND.value())
+                .error("Not Found")
+                .message("Could not locate the email address! Please search for a valid email address.")
+                .path(request.getRequestURI())
+                .timestamp(LocalDateTime.now())
+                .build();
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
+
+    /**
+     * Handler para falha ao dar upload na imagem (500 Internal Server Error)
+     */
+
+    @ExceptionHandler(ImageUploadException.class)
+    public ResponseEntity<ErrorResponse> handleImageUploadException(ImageUploadException ex, HttpServletRequest request) {
+        logger.error("Image upload error: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .error("Image Upload Error")
+                .message("Unable to upload image, please try again later.")
+                .path(request.getRequestURI())
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+
+    @ExceptionHandler(MaxImagesExceededException.class)
+    public ResponseEntity<ErrorResponse> handleMaxImagesExceededException(MaxImagesExceededException ex, HttpServletRequest request) {
+        logger.warn("Max image upload exceeded: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("Maximum Images Exceeded")
+                .message("The maximum number of images has been reached.")
+                .path(request.getRequestURI())
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler(InvalidImageFormatException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidImageFormatException(InvalidImageFormatException ex, HttpServletRequest request) {
+        logger.warn("Invalid image format: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("Invalid Image Format")
+                .message("Invalid format, try another.")
+                .path(request.getRequestURI())
+                .timestamp(LocalDateTime.now())
+                .build();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler(FileStorageException.class)
+    public ResponseEntity<ErrorResponse> handleFileStorageException(FileStorageException ex, HttpServletRequest request) {
+        logger.warn("File storage error: {}", ex.getMessage(), ex);
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .error("File Storage Error")
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .timestamp(LocalDateTime.now())
+                .build();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+
+    @ExceptionHandler(ListingImageException.class)
+    public ResponseEntity<ErrorResponse> handleListingImageException(
+            ListingImageException ex, HttpServletRequest request) {
+
+        logger.warn("Listing image validation error: {}", ex.getMessage());
+
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("Invalid Image")
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler(ListingNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleListingNotFoundException(
+            ListingNotFoundException ex, HttpServletRequest request) {
+
+        logger.warn("Listing not found: {}", ex.getMessage());
+
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.NOT_FOUND.value())
+                .error("Listing Not Found")
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceeded(
+            MaxUploadSizeExceededException ex, HttpServletRequest request) {
+
+        logger.warn("File size exceeded: {}", ex.getMessage());
+
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.PAYLOAD_TOO_LARGE.value())
+                .error("File Too Large")
+                .message("File size exceeds maximum allowed limit")
+                .path(request.getRequestURI())
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(error);
+    }
+
+
 
 }

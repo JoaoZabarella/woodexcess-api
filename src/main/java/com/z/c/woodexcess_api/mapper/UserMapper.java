@@ -23,25 +23,28 @@ public class UserMapper {
 
     public User toEntity(RegisterRequest dto) {
         User user = new User();
-        user.setName(dto.getName());
-        user.setEmail(dto.getEmail());
-        user.setPhone(dto.getPhone());
-        user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        user.setName(dto.name());
+        user.setEmail(dto.email());
+        user.setPhone(dto.phone());
+        user.setPassword(passwordEncoder.encode(dto.password()));
         user.setRole(UserRole.USER);
         user.setActive(true);
 
-        if (dto.getAddresses() != null) {
-            List<Address> addresses = dto.getAddresses().stream().map(addressDto -> {
+        if (dto.addresses() != null) {
+            List<Address> addresses = dto.addresses().stream().map(addressDto -> {
                 Address address = new Address();
-                address.setStreet(addressDto.getStreet());
-                address.setNumber(addressDto.getNumber());
-                address.setComplement(addressDto.getComplement());
-                address.setDistrict(addressDto.getDistrict());
-                address.setCity(addressDto.getCity());
-                address.setState(addressDto.getState());
-                address.setZipCode(addressDto.getZipCode());
-                address.setCountry(addressDto.getCountry());
+                address.setStreet(addressDto.street());
+                address.setNumber(addressDto.number());
+                address.setComplement(addressDto.complement());
+                address.setDistrict(addressDto.district());
+                address.setCity(addressDto.city());
+                address.setState(addressDto.state());
+                address.setZipCode(addressDto.zipCode());
+                address.setCountry(addressDto.country());
                 address.setActive(true);
+                if (addressDto.isPrimary() != null) {
+                    address.setPrimary(addressDto.isPrimary());
+                }
                 address.setUser(user);
                 return address;
             }).toList();

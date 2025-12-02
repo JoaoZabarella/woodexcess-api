@@ -3,7 +3,7 @@ package com.z.c.woodexcess_api.controller;
 import com.z.c.woodexcess_api.dto.auth.LoginRequest;
 import com.z.c.woodexcess_api.dto.auth.LoginResponse;
 import com.z.c.woodexcess_api.dto.auth.RefreshTokenRequest;
-import com.z.c.woodexcess_api.service.AuthService;
+import com.z.c.woodexcess_api.service.security.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
