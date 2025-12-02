@@ -10,18 +10,12 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "material_listings", indexes = {
-        @Index(name = "idx_listing_owner", columnList = "owner_id"),
-        @Index(name = "idx_listing_status", columnList = "status"),
-        @Index(name = "idx_listing_material_type", columnList = "material_type"),
-        @Index(name = "idx_listing_city", columnList = "city"),
-        @Index(name = "idx_listing_state", columnList = "state"),
-        @Index(name = "idx_listing_price", columnList = "price"),
-        @Index(name = "idx_listing_created_at", columnList = "created_at")
-})
+@Table(name = "material_listings")
 @Getter
 @Setter
 @Builder
@@ -72,6 +66,10 @@ public class MaterialListing {
     @Column(name = "status", nullable = false, length = 20)
     @Builder.Default
     private ListingStatus status = ListingStatus.ACTIVE;
+
+    @OneToMany(mappedBy = "listing", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<ListingImage> images = new ArrayList<>();
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

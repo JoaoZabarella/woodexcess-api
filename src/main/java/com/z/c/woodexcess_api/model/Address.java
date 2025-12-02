@@ -14,12 +14,6 @@ import java.util.UUID;
 @Entity
 @Table(
         name = "addresses",
-        indexes = {
-                @Index(name = "idx_address_user_id", columnList = "user_id"),
-                @Index(name = "idx_address_zip_code", columnList = "zip_code"),
-                @Index(name = "idx_address_active", columnList = "active"),
-                @Index(name = "idx_address_primary", columnList = "is_primary")
-        },
         uniqueConstraints = {
                 @UniqueConstraint(
                         name = "uk_user_zip_number",
