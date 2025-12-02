@@ -5,6 +5,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "listing_images")
@@ -17,7 +18,7 @@ public class ListingImage {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private java.util.UUID id;
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "listing_id", nullable = false)
@@ -38,7 +39,7 @@ public class ListingImage {
     @Column(name = "file_size", nullable = false)
     private Long fileSize;
 
-    @Column(name = "file_extension", length = 10, nullable = false)
+    @Column(name = "file_extension", nullable = false)
     private String fileExtension;
 
     @Column(name = "is_primary", nullable = false)
