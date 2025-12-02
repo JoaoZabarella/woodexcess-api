@@ -1,4 +1,3 @@
-
 package com.z.c.woodexcess_api.service;
 
 import com.z.c.woodexcess_api.dto.address.AddressRequest;
@@ -7,7 +6,7 @@ import com.z.c.woodexcess_api.dto.auth.RegisterResponse;
 import com.z.c.woodexcess_api.dto.user.ChangePasswordRequest;
 import com.z.c.woodexcess_api.dto.user.UpdateUserRequest;
 import com.z.c.woodexcess_api.dto.user.UserResponse;
-import com.z.c.woodexcess_api.exception.users.EmailAlredyExistException;
+import com.z.c.woodexcess_api.exception.users.EmailAlreadyExistException;
 import com.z.c.woodexcess_api.exception.users.PasswordIncorrectException;
 import com.z.c.woodexcess_api.mapper.UserMapper;
 import com.z.c.woodexcess_api.model.User;
@@ -111,7 +110,7 @@ class UserServiceTest {
     @Test
     @DisplayName("Should register new user successfully")
     void shouldRegisterUserSuccessfully() {
-        when(repository.findByEmail(registerRequest.getEmail())).thenReturn(Optional.empty());
+        when(repository.findByEmail(registerRequest.email())).thenReturn(Optional.empty());
         when(mapper.toEntity(registerRequest)).thenReturn(user);
         when(encoder.encode(anyString())).thenReturn(ENCODED_PASSWORD);
         when(repository.save(any(User.class))).thenReturn(user);
@@ -122,7 +121,7 @@ class UserServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.email()).isEqualTo("new@mail.com");
 
-        verify(repository).findByEmail(registerRequest.getEmail());
+        verify(repository).findByEmail(registerRequest.email());
         verify(encoder).encode(anyString());
         verify(repository).save(any(User.class));
         verify(mapper).toRegisterResponse(user);
@@ -131,13 +130,13 @@ class UserServiceTest {
     @Test
     @DisplayName("Should throw EmailAlredyExistException when email exists")
     void shouldThrowExceptionWhenEmailExists() {
-        when(repository.findByEmail(registerRequest.getEmail())).thenReturn(Optional.of(user));
+        when(repository.findByEmail(registerRequest.email())).thenReturn(Optional.of(user));
 
         assertThatThrownBy(() -> userService.registerUser(registerRequest))
-                .isInstanceOf(EmailAlredyExistException.class)
+                .isInstanceOf(EmailAlreadyExistException.class)
                 .hasMessage("Email already exists");
 
-        verify(repository).findByEmail(registerRequest.getEmail());
+        verify(repository).findByEmail(registerRequest.email());
         verifyNoInteractions(encoder, mapper);
         verify(repository, never()).save(any());
     }
@@ -151,8 +150,8 @@ class UserServiceTest {
         Optional<UserResponse> result = userService.getUserByID(USER_ID);
 
         assertThat(result).isPresent();
-        assertThat(result.get().getId()).isEqualTo(USER_ID);
-        assertThat(result.get().getEmail()).isEqualTo(EMAIL);
+        assertThat(result.get().id()).isEqualTo(USER_ID);
+        assertThat(result.get().email()).isEqualTo(EMAIL);
 
         verify(repository).findById(USER_ID);
         verify(mapper).toUserResponse(user);
@@ -223,7 +222,7 @@ class UserServiceTest {
         when(repository.findByEmail(existingEmail)).thenReturn(Optional.of(anotherUser));
 
         assertThatThrownBy(() -> userService.updateUser(USER_ID, updateRequest))
-                .isInstanceOf(EmailAlredyExistException.class)
+                .isInstanceOf(EmailAlreadyExistException.class)
                 .hasMessage("Email already exists");
 
         verify(repository).findById(USER_ID);
@@ -317,7 +316,7 @@ class UserServiceTest {
 
         assertThat(result).isNotNull();
         assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getContent().get(0).getId()).isEqualTo(USER_ID);
+        assertThat(result.getContent().get(0).id()).isEqualTo(USER_ID);
 
         verify(repository).findAll(pageable);
         verify(mapper).toUserResponse(user);

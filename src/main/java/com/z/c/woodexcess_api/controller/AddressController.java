@@ -29,8 +29,7 @@ public class AddressController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<AddressResponse> create(
             @Valid @RequestBody AddressRequest request,
-            @AuthenticationPrincipal CustomUserDetails userDetails
-    ) {
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
         log.info("Creating address for user '{}', payload: {}", userDetails.getUsername(), request);
         AddressResponse response = addressService.create(userDetails.getId(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -40,9 +39,8 @@ public class AddressController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<AddressResponse> createFromCep(
             @Valid @RequestBody AddressFromCepRequest request,
-            @AuthenticationPrincipal CustomUserDetails userDetails
-    ) {
-        log.info("POST /api/addresses/from-cep - CEP: {} - User: {}", request.getZipCode(), userDetails.getUsername());
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        log.info("POST /api/addresses/from-cep - CEP: {} - User: {}", request.zipCode(), userDetails.getUsername());
         AddressResponse response = addressService.createFromCep(userDetails.getId(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -75,8 +73,7 @@ public class AddressController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<AddressResponse> update(
             @PathVariable UUID id,
-            @Valid @RequestBody AddressRequest request
-    ) {
+            @Valid @RequestBody AddressRequest request) {
         log.info("Updating address - ID: {}, Payload: {}", id, request);
         AddressResponse response = addressService.update(id, request);
         return ResponseEntity.ok(response);
