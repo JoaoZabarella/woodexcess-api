@@ -77,10 +77,10 @@ public class UserService {
         }
 
         user.setName(dto.name());
-        var updateUser = repository.save(user);
+        var savedUser = repository.save(user);
 
         log.info("User updated successfully: {}", id);
-        return mapper.toUserResponse(updateUser);
+        return mapper.toUserResponse(savedUser);
     }
 
     @Transactional

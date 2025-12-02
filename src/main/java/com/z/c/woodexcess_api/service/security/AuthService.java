@@ -71,6 +71,9 @@ public class AuthService {
                     return new BadCredentialsException("User not found");
                 });
 
+
+        assert user != null : "User guaranteed by orElseThrow";
+
         String newAccessToken = provider.generateJwtToken(user);
         String newRefreshToken = result.rawToken();
 
