@@ -28,7 +28,7 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
     List<Message> findConversationBetweenUsers(
             @Param("user1Id") UUID user1Id,
             @Param("user2Id") UUID user2Id,
-            @Param("listinId") UUID listingId
+            @Param("listingId") UUID listingId
     );
 
 
