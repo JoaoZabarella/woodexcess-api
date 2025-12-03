@@ -1,5 +1,6 @@
 package com.z.c.woodexcess_api.mapper;
 
+import com.z.c.woodexcess_api.dto.address.AddressResponse;
 import com.z.c.woodexcess_api.dto.auth.RegisterRequest;
 import com.z.c.woodexcess_api.dto.auth.RegisterResponse;
 import com.z.c.woodexcess_api.dto.user.UserResponse;
@@ -9,6 +10,7 @@ import com.z.c.woodexcess_api.enums.UserRole;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.List;
 
 @Component
@@ -22,33 +24,22 @@ public class UserMapper {
     }
 
     public User toEntity(RegisterRequest dto) {
-        User user = new User();
-        user.setName(dto.name());
-        user.setEmail(dto.email());
-        user.setPhone(dto.phone());
-        user.setPassword(passwordEncoder.encode(dto.password()));
-        user.setRole(UserRole.USER);
-        user.setActive(true);
+        User user = User.builder()
+                .name(dto.name())
+                .email(dto.email())
+                .phone(dto.phone())
+                .password(passwordEncoder.encode(dto.password()))
+                .role(UserRole.USER)
+                .active(true)
+                .build();
 
-        if (dto.addresses() != null) {
-            List<Address> addresses = dto.addresses().stream().map(addressDto -> {
-                Address address = new Address();
-                address.setStreet(addressDto.street());
-                address.setNumber(addressDto.number());
-                address.setComplement(addressDto.complement());
-                address.setDistrict(addressDto.district());
-                address.setCity(addressDto.city());
-                address.setState(addressDto.state());
-                address.setZipCode(addressDto.zipCode());
-                address.setCountry(addressDto.country());
-                address.setActive(true);
-                if (addressDto.isPrimary() != null) {
-                    address.setPrimary(addressDto.isPrimary());
-                }
-                address.setUser(user);
-                return address;
-            }).toList();
+        if (dto.addresses() != null && !dto.addresses().isEmpty()) {
+            List<Address> addresses = dto.addresses().stream()
+                    .map(addressDto -> addressMapper.toEntity(addressDto, user))
+                    .toList();
             user.setAddresses(addresses);
+        } else {
+            user.setAddresses(Collections.emptyList());
         }
 
         return user;
@@ -56,15 +47,30 @@ public class UserMapper {
 
     public RegisterResponse toRegisterResponse(User user) {
         return new RegisterResponse(
-                user.getId().toString(),
+                user.getId(),
                 user.getName(),
                 user.getEmail(),
                 user.getPhone(),
                 user.getActive(),
-                user.getRole());
+                user.getRole()
+        );
     }
 
     public UserResponse toUserResponse(User user) {
-        return new UserResponse(user, addressMapper);
+        List<AddressResponse> addressResponses = user.getAddresses() != null
+                ? user.getAddresses().stream()
+                .map(addressMapper::toResponseDTO)
+                .toList()
+                : Collections.emptyList();
+
+        return new UserResponse(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getPhone(),
+                user.getActive(),
+                user.getRole(),
+                addressResponses
+        );
     }
 }
