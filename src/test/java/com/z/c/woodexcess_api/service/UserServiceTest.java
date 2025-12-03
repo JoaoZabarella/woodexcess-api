@@ -88,22 +88,22 @@ class UserServiceTest {
                 addresses);
 
         registerResponse = new RegisterResponse(
-                UUID.randomUUID().toString(),
+                UUID.randomUUID(),
                 "New User",
                 "new@mail.com",
                 "987654321",
                 true,
                 UserRole.USER);
 
-        // UserResponse: 7 parâmetros (id, name, email, phone, active, role, addresses)
+
         userResponse = new UserResponse(
                 USER_ID,
                 "Test User",
                 EMAIL,
                 "123456789",
-                true, // ← active
+                true,
                 UserRole.USER,
-                new ArrayList<>() // ← Lista de AddressResponse
+                new ArrayList<>()
         );
     }
 
