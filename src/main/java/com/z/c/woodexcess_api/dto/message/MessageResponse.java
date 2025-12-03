@@ -9,29 +9,24 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Data
+
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class MessageResponse {
+public record MessageResponse (
 
-    private UUID id;
-
-    private UUID senderId;
-    private String senderName;
-
-    private UUID receiverId;
-    private String receiverName;
-
-    private UUID listingId;
-    private String listingTitle;
-
-    private String content;
-    private Boolean isRead;
-
+     UUID id,
+     UUID senderId,
+     String senderName,
+     UUID receiverId,
+     String receiverName,
+     UUID listingId,
+     String listingTitle,
+     String content,
+     Boolean isRead,
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private LocalDateTime createdAt;
-
+    LocalDateTime createdAt,
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private LocalDateTime updatedAt;
+    LocalDateTime updatedAt
+
+    ){
+
 }
