@@ -37,6 +37,7 @@ public class Message {
     private String content;
 
     @Column(name = "is_read", nullable = false)
+    @Builder.Default
     private Boolean isRead = false;
 
     @CreationTimestamp
