@@ -5,13 +5,14 @@ import com.z.c.woodexcess_api.exception.address.AddressNotFoundException;
 import com.z.c.woodexcess_api.exception.auth.RefreshTokenException;
 import com.z.c.woodexcess_api.exception.auth.TokenReuseDetectedException;
 import com.z.c.woodexcess_api.exception.listing.*;
+import com.z.c.woodexcess_api.exception.message.MessageNotFoundException;
 import com.z.c.woodexcess_api.exception.storage.FileStorageException;
+import com.z.c.woodexcess_api.exception.users.UserNotFoundException;
 import com.z.c.woodexcess_api.exception.users.EmailAlreadyExistException;
 import com.z.c.woodexcess_api.exception.users.PasswordIncorrectException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -22,142 +23,77 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
+
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
-    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    /**
-     * Handler para email já existente (409 Conflict)
-     */
-    @ExceptionHandler(EmailAlreadyExistException.class)
-    public ResponseEntity<ErrorResponse> handleEmailAlreadyExists(
-            EmailAlreadyExistException ex, HttpServletRequest request) {
-
-        logger.warn("Email already exists: {}", ex.getMessage());
-
-        ErrorResponse error = ErrorResponse.builder()
-                .status(HttpStatus.CONFLICT.value())
-                .error("Conflict")
-                .message(ex.getMessage())
-                .path(request.getRequestURI())
-                .timestamp(LocalDateTime.now())
-                .build();
-
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
-    }
-
-    /**
-     * Handler para senha incorreta (401 Unauthorized)
-     */
-    @ExceptionHandler(PasswordIncorrectException.class)
-    public ResponseEntity<ErrorResponse> handlePasswordIncorrect(
-            PasswordIncorrectException ex, HttpServletRequest request) {
-
-        logger.warn("Password incorrect attempt from IP: {}", request.getRemoteAddr());
-
-        ErrorResponse error = ErrorResponse.builder()
-                .status(HttpStatus.UNAUTHORIZED.value())
-                .error("Unauthorized")
-                .message(ex.getMessage())
-                .path(request.getRequestURI())
-                .timestamp(LocalDateTime.now())
-                .build();
-
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
-    }
-
-    /**
-     * Handler para credenciais inválidas no login (401 Unauthorized)
-     */
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentials(
-            BadCredentialsException ex, HttpServletRequest request) {
+            BadCredentialsException ex,
+            HttpServletRequest request) {
 
-        logger.warn("Bad credentials from IP: {}", request.getRemoteAddr());
+        log.warn("Bad credentials attempt from IP: {}", request.getRemoteAddr());
 
-        ErrorResponse error = ErrorResponse.builder()
-                .status(HttpStatus.UNAUTHORIZED.value())
-                .error("Unauthorized")
-                .message(ex.getMessage())
-                .path(request.getRequestURI())
-                .timestamp(LocalDateTime.now())
-                .build();
-
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+        return buildErrorResponse(
+                HttpStatus.UNAUTHORIZED,
+                "Invalid username or password",
+                request.getRequestURI()
+        );
     }
 
-    /**
-     * Handler para refresh token inválido/expirado (401 Unauthorized)
-     */
+
+    @ExceptionHandler(PasswordIncorrectException.class)
+    public ResponseEntity<ErrorResponse> handlePasswordIncorrect(
+            PasswordIncorrectException ex,
+            HttpServletRequest request) {
+
+        log.warn("Password incorrect attempt from IP: {}", request.getRemoteAddr());
+
+        return buildErrorResponse(
+                HttpStatus.UNAUTHORIZED,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+    }
+
     @ExceptionHandler(RefreshTokenException.class)
     public ResponseEntity<ErrorResponse> handleRefreshTokenException(
-            RefreshTokenException ex, HttpServletRequest request) {
+            RefreshTokenException ex,
+            HttpServletRequest request) {
 
-        logger.warn("Refresh token error: {} from IP: {}", ex.getMessage(), request.getRemoteAddr());
+        log.warn("Refresh token error: {} from IP: {}", ex.getMessage(), request.getRemoteAddr());
 
-        ErrorResponse error = ErrorResponse.builder()
-                .status(HttpStatus.UNAUTHORIZED.value())
-                .error("Unauthorized")
-                .message(ex.getMessage())
-                .path(request.getRequestURI())
-                .timestamp(LocalDateTime.now())
-                .build();
-
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+        return buildErrorResponse(
+                HttpStatus.UNAUTHORIZED,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
     }
 
-    /**
-     * Handler para detecção de reuso de token (401 Unauthorized + Security Alert)
-     */
+
     @ExceptionHandler(TokenReuseDetectedException.class)
     public ResponseEntity<ErrorResponse> handleTokenReuseDetected(
-            TokenReuseDetectedException ex, HttpServletRequest request) {
+            TokenReuseDetectedException ex,
+            HttpServletRequest request) {
 
-        logger.error("SECURITY ALERT: Token reuse detected from IP: {}", request.getRemoteAddr());
+        log.error("SECURITY ALERT: Token reuse detected from IP: {} - Details: {}",
+                request.getRemoteAddr(), ex.getMessage());
 
-        ErrorResponse error = ErrorResponse.builder()
-                .status(HttpStatus.UNAUTHORIZED.value())
-                .error("Security Alert")
-                .message(ex.getMessage())
-                .path(request.getRequestURI())
-                .timestamp(LocalDateTime.now())
-                .build();
-
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+        return buildErrorResponse(
+                HttpStatus.UNAUTHORIZED,
+                "Security violation detected. All sessions have been revoked.",
+                request.getRequestURI()
+        );
     }
 
-    /**
-     * Handler para entidade não encontrada (404 Not Found)
-     */
-    @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleEntityNotFound(
-            EntityNotFoundException ex, HttpServletRequest request) {
-
-        logger.warn("Entity not found: {}", ex.getMessage());
-
-        ErrorResponse error = ErrorResponse.builder()
-                .status(HttpStatus.NOT_FOUND.value())
-                .error("Not Found")
-                .message(ex.getMessage())
-                .path(request.getRequestURI())
-                .timestamp(LocalDateTime.now())
-                .build();
-
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
-    }
-
-    /**
-     * Handler para erros de validação (@Valid) (400 Bad Request)
-     * Retorna todos os campos inválidos com suas mensagens
-     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationExceptions(
-            MethodArgumentNotValidException ex, HttpServletRequest request) {
+            MethodArgumentNotValidException ex,
+            HttpServletRequest request) {
 
-        // Extrair erros de validação por campo
         List<ErrorResponse.ValidationError> validationErrors = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
@@ -165,189 +101,241 @@ public class GlobalExceptionHandler {
                         error.getField(),
                         error.getDefaultMessage()
                 ))
-                .collect(Collectors.toList());
+                .toList();
 
-        logger.warn("Validation failed for {} fields", validationErrors.size());
+        log.warn("Validation failed for {} fields on path: {}",
+                validationErrors.size(), request.getRequestURI());
 
-        ErrorResponse error = ErrorResponse.builder()
-                .status(HttpStatus.BAD_REQUEST.value())
-                .error("Validation Failed")
-                .message("Invalid input data. Check 'validationErrors' for details.")
-                .path(request.getRequestURI())
+        ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+                .message("Validation failed. Check 'validationErrors' for details.")
+                .path(request.getRequestURI())
                 .validationErrors(validationErrors)
                 .build();
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
-    /**
-     * Handler para IllegalArgumentException (400 Bad Request)
-     */
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgument(
-            IllegalArgumentException ex, HttpServletRequest request) {
+            IllegalArgumentException ex,
+            HttpServletRequest request) {
 
-        logger.warn("Illegal argument: {}", ex.getMessage());
+        log.warn("Illegal argument: {} on path: {}", ex.getMessage(), request.getRequestURI());
 
-        ErrorResponse error = ErrorResponse.builder()
-                .status(HttpStatus.BAD_REQUEST.value())
-                .error("Bad Request")
-                .message(ex.getMessage())
-                .path(request.getRequestURI())
-                .timestamp(LocalDateTime.now())
-                .build();
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
     }
 
-    /**
-     * Handler genérico para qualquer exceção não tratada (500 Internal Server Error)
-     * NÃO expõe detalhes internos em produção
-     */
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(
-            Exception ex, HttpServletRequest request) {
-
-        logger.error("Unexpected error occurred", ex);
-
-        ErrorResponse error = ErrorResponse.builder()
-                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                .error("Internal Server Error")
-                .message("An unexpected error occurred. Please contact support.")
-                .path(request.getRequestURI())
-                .timestamp(LocalDateTime.now())
-                .build();
-
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
-    }
-
-    /**
-     * Handler Erro ao procurar email e não localizar (404 Not Found)
-     */
-
-    @ExceptionHandler(AddressNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleAddressNotFound(AddressNotFoundException ex, HttpServletRequest request) {
-        logger.warn("Address not found: {}", ex.getMessage());
-        ErrorResponse error = ErrorResponse.builder()
-                .status(HttpStatus.NOT_FOUND.value())
-                .error("Not Found")
-                .message("Could not locate the email address! Please search for a valid email address.")
-                .path(request.getRequestURI())
-                .timestamp(LocalDateTime.now())
-                .build();
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
-    }
-
-    /**
-     * Handler para falha ao dar upload na imagem (500 Internal Server Error)
-     */
-
-    @ExceptionHandler(ImageUploadException.class)
-    public ResponseEntity<ErrorResponse> handleImageUploadException(ImageUploadException ex, HttpServletRequest request) {
-        logger.error("Image upload error: {}", ex.getMessage());
-        ErrorResponse error = ErrorResponse.builder()
-                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                .error("Image Upload Error")
-                .message("Unable to upload image, please try again later.")
-                .path(request.getRequestURI())
-                .timestamp(LocalDateTime.now())
-                .build();
-
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
-    }
-
-    @ExceptionHandler(MaxImagesExceededException.class)
-    public ResponseEntity<ErrorResponse> handleMaxImagesExceededException(MaxImagesExceededException ex, HttpServletRequest request) {
-        logger.warn("Max image upload exceeded: {}", ex.getMessage());
-        ErrorResponse error = ErrorResponse.builder()
-                .status(HttpStatus.BAD_REQUEST.value())
-                .error("Maximum Images Exceeded")
-                .message("The maximum number of images has been reached.")
-                .path(request.getRequestURI())
-                .timestamp(LocalDateTime.now())
-                .build();
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-    }
 
     @ExceptionHandler(InvalidImageFormatException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidImageFormatException(InvalidImageFormatException ex, HttpServletRequest request) {
-        logger.warn("Invalid image format: {}", ex.getMessage());
-        ErrorResponse error = ErrorResponse.builder()
-                .status(HttpStatus.BAD_REQUEST.value())
-                .error("Invalid Image Format")
-                .message("Invalid format, try another.")
-                .path(request.getRequestURI())
-                .timestamp(LocalDateTime.now())
-                .build();
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    public ResponseEntity<ErrorResponse> handleInvalidImageFormat(
+            InvalidImageFormatException ex,
+            HttpServletRequest request) {
+
+        log.warn("Invalid image format: {}", ex.getMessage());
+
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                "Invalid image format. Supported formats: JPG, JPEG, PNG, WEBP",
+                request.getRequestURI()
+        );
     }
 
-    @ExceptionHandler(FileStorageException.class)
-    public ResponseEntity<ErrorResponse> handleFileStorageException(FileStorageException ex, HttpServletRequest request) {
-        logger.warn("File storage error: {}", ex.getMessage(), ex);
-        ErrorResponse error = ErrorResponse.builder()
-                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                .error("File Storage Error")
-                .message(ex.getMessage())
-                .path(request.getRequestURI())
-                .timestamp(LocalDateTime.now())
-                .build();
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+
+    @ExceptionHandler(MaxImagesExceededException.class)
+    public ResponseEntity<ErrorResponse> handleMaxImagesExceeded(
+            MaxImagesExceededException ex,
+            HttpServletRequest request) {
+
+        log.warn("Max images exceeded: {}", ex.getMessage());
+
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                "Maximum number of images (5) exceeded for this listing",
+                request.getRequestURI()
+        );
     }
 
     @ExceptionHandler(ListingImageException.class)
     public ResponseEntity<ErrorResponse> handleListingImageException(
-            ListingImageException ex, HttpServletRequest request) {
+            ListingImageException ex,
+            HttpServletRequest request) {
 
-        logger.warn("Listing image validation error: {}", ex.getMessage());
+        log.warn("Listing image validation error: {}", ex.getMessage());
 
-        ErrorResponse error = ErrorResponse.builder()
-                .status(HttpStatus.BAD_REQUEST.value())
-                .error("Invalid Image")
-                .message(ex.getMessage())
-                .path(request.getRequestURI())
-                .timestamp(LocalDateTime.now())
-                .build();
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
     }
+
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleEntityNotFound(
+            EntityNotFoundException ex,
+            HttpServletRequest request) {
+
+        log.warn("Entity not found: {}", ex.getMessage());
+
+        return buildErrorResponse(
+                HttpStatus.NOT_FOUND,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+    }
+
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleUserNotFound(
+            UserNotFoundException ex,
+            HttpServletRequest request) {
+
+        log.warn("User not found: {}", ex.getMessage());
+
+        return buildErrorResponse(
+                HttpStatus.NOT_FOUND,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+    }
+
+    @ExceptionHandler(AddressNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleAddressNotFound(
+            AddressNotFoundException ex,
+            HttpServletRequest request) {
+
+        log.warn("Address not found: {}", ex.getMessage());
+
+        return buildErrorResponse(
+                HttpStatus.NOT_FOUND,
+                "Address not found. Please verify the CEP and try again.",
+                request.getRequestURI()
+        );
+    }
+
 
     @ExceptionHandler(ListingNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleListingNotFoundException(
-            ListingNotFoundException ex, HttpServletRequest request) {
+    public ResponseEntity<ErrorResponse> handleListingNotFound(
+            ListingNotFoundException ex,
+            HttpServletRequest request) {
 
-        logger.warn("Listing not found: {}", ex.getMessage());
+        log.warn("Listing not found: {}", ex.getMessage());
 
-        ErrorResponse error = ErrorResponse.builder()
-                .status(HttpStatus.NOT_FOUND.value())
-                .error("Listing Not Found")
-                .message(ex.getMessage())
-                .path(request.getRequestURI())
-                .timestamp(LocalDateTime.now())
-                .build();
-
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        return buildErrorResponse(
+                HttpStatus.NOT_FOUND,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
     }
+
+    @ExceptionHandler(MessageNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleMessageNotFound(
+            MessageNotFoundException ex,
+            HttpServletRequest request) {
+
+        log.warn("Message not found: {}", ex.getMessage());
+
+        return buildErrorResponse(
+                HttpStatus.NOT_FOUND,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+    }
+
+
+    @ExceptionHandler(EmailAlreadyExistException.class)
+    public ResponseEntity<ErrorResponse> handleEmailAlreadyExists(
+            EmailAlreadyExistException ex,
+            HttpServletRequest request) {
+
+        log.warn("Email already exists: {}", ex.getMessage());
+
+        return buildErrorResponse(
+                HttpStatus.CONFLICT,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+    }
+
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceeded(
-            MaxUploadSizeExceededException ex, HttpServletRequest request) {
+            MaxUploadSizeExceededException ex,
+            HttpServletRequest request) {
 
-        logger.warn("File size exceeded: {}", ex.getMessage());
+        log.warn("File size exceeded maximum allowed limit from IP: {}", request.getRemoteAddr());
 
-        ErrorResponse error = ErrorResponse.builder()
-                .status(HttpStatus.PAYLOAD_TOO_LARGE.value())
-                .error("File Too Large")
-                .message("File size exceeds maximum allowed limit")
-                .path(request.getRequestURI())
-                .timestamp(LocalDateTime.now())
-                .build();
-
-        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(error);
+        return buildErrorResponse(
+                HttpStatus.PAYLOAD_TOO_LARGE,
+                "File size exceeds maximum allowed limit (10MB per file)",
+                request.getRequestURI()
+        );
     }
 
 
+    @ExceptionHandler(ImageUploadException.class)
+    public ResponseEntity<ErrorResponse> handleImageUploadException(
+            ImageUploadException ex,
+            HttpServletRequest request) {
 
+        log.error("Image upload error: {}", ex.getMessage(), ex);
+
+        return buildErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Failed to upload image. Please try again later.",
+                request.getRequestURI()
+        );
+    }
+
+    @ExceptionHandler(FileStorageException.class)
+    public ResponseEntity<ErrorResponse> handleFileStorageException(
+            FileStorageException ex,
+            HttpServletRequest request) {
+
+        log.error("File storage error: {}", ex.getMessage(), ex);
+
+        return buildErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "File storage system error. Please contact support.",
+                request.getRequestURI()
+        );
+    }
+
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleGenericException(
+            Exception ex,
+            HttpServletRequest request) {
+
+        log.error("Unexpected error occurred on path: {}", request.getRequestURI(), ex);
+
+        return buildErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "An unexpected error occurred. Please contact support if the problem persists.",
+                request.getRequestURI()
+        );
+    }
+
+    private ResponseEntity<ErrorResponse> buildErrorResponse(
+            HttpStatus status,
+            String message,
+            String path) {
+
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(status.value())
+                .error(status.getReasonPhrase())
+                .message(message)
+                .path(path)
+                .build();
+
+        return ResponseEntity.status(status).body(errorResponse);
+    }
 }
