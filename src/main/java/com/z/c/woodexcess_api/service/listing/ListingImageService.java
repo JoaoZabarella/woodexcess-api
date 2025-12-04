@@ -12,6 +12,7 @@ import com.z.c.woodexcess_api.repository.MaterialListingRepository;
 import com.z.c.woodexcess_api.service.storage.StorageService;
 import com.z.c.woodexcess_api.util.FileUtils;
 import com.z.c.woodexcess_api.validator.ImageValidator;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,9 +25,8 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+@Slf4j
 public class ListingImageService {
-
-    private static final Logger logger = LoggerFactory.getLogger(ListingImageService.class);
 
     private final ListingImageRepository imageRepository;
     private final MaterialListingRepository listingRepository;
@@ -55,60 +55,60 @@ public class ListingImageService {
 
     @Transactional
     public ImageResponse addImage(UUID listingId, MultipartFile file, Boolean isPrimary) {
-        logger.info("Starting image upload for listing: {}", listingId);
-        logger.debug("File details: name={}, size={} bytes, type={}",
+        log.info("Starting image upload for listing: {}", listingId);
+        log.debug("File details: name={}, size={} bytes, type={}",
                 file.getOriginalFilename(), file.getSize(), file.getContentType());
 
-        logger.debug("Finding listing by ID: {}", listingId);
+        log.debug("Finding listing by ID: {}", listingId);
         MaterialListing listing = findListingOrThrow(listingId);
-        logger.debug("Listing found : {}", listing.getTitle());
+        log.debug("Listing found : {}", listing.getTitle());
 
         try {
 
-            logger.debug("Validating image file");
+            log.debug("Validating image file");
             imageValidator.validate(file);
-            logger.debug("Image validation passed");
+            log.debug("Image validation passed");
 
-            logger.debug("Checking image count limit (max: {})", maxImages);
+            log.debug("Checking image count limit (max: {})", maxImages);
             validateImageLimit(listing);
-            logger.debug("Image limit check passed");
+            log.debug("Image limit check passed");
 
             String imageKey;
             try {
-                logger.info("Uploading original image to S3");
+                log.info("Uploading original image to S3");
                 imageKey = storageService.upload(file, "listings/images");
-                logger.info("Original image uploaded successfully: {}", imageKey);
+                log.info("Original image uploaded successfully: {}", imageKey);
             } catch (Exception e) {
-                logger.error("Failed to upload original image to S3 for listing {}: {}", listingId, e.getMessage(), e);
+                log.error("Failed to upload original image to S3 for listing {}: {}", listingId, e.getMessage(), e);
                 throw new ListingImageException("Failed to upload image to storage", e);
             }
 
 
             String imageUrl = storageService.getPubliUrl(imageKey);
-            logger.debug("Generated image URL: {}", imageUrl);
+            log.debug("Generated image URL: {}", imageUrl);
 
 
             byte[] thumbnailBytes;
 
             String thumbnailKey;
             try {
-                logger.info("Generating thumbnail from uploaded image");
+                log.info("Generating thumbnail from uploaded image");
                 thumbnailBytes = imageProcessor.generateThumbnail(file.getBytes());
-                logger.info("Thumbnail generated successfully: {} bytes", thumbnailBytes.length);
+                log.info("Thumbnail generated successfully: {} bytes", thumbnailBytes.length);
 
                 MultipartFile thumbnailFile = imageProcessor.createMultipartFile(
                         thumbnailBytes,
                         "thumbnail-" + file.getOriginalFilename());
 
-                logger.info("Uploading thumbnail to S3");
+                log.info("Uploading thumbnail to S3");
                 thumbnailKey = storageService.upload(thumbnailFile, "listings/thumbnails");
-                logger.info("Thumbnail uploaded successfully: {}", thumbnailKey);
+                log.info("Thumbnail uploaded successfully: {}", thumbnailKey);
             } catch (IOException e) {
-                logger.error("Failed to generate thumbnail for listing {}: {}", listingId, e.getMessage(), e);
+                log.error("Failed to generate thumbnail for listing {}: {}", listingId, e.getMessage(), e);
                 try {
                     storageService.delete(imageKey);
                 } catch (Exception rollBackEx) {
-                    logger.error("Failed to rollback image upload: {}", rollBackEx.getMessage());
+                    log.error("Failed to rollback image upload: {}", rollBackEx.getMessage());
                 }
 
                 throw new ListingImageException("Failed to upload thumbnail to storage", e);
@@ -116,38 +116,38 @@ public class ListingImageService {
 
 
             String thumbnailUrl = storageService.getPubliUrl(thumbnailKey);
-            logger.debug("Generated thumbnail URL: {}", thumbnailUrl);
+            log.debug("Generated thumbnail URL: {}", thumbnailUrl);
 
             Integer displayOrder = calculateNextDisplayOrder(listing);
-            logger.debug("Calculated display order: {}", displayOrder);
+            log.debug("Calculated display order: {}", displayOrder);
 
             if (Boolean.TRUE.equals(isPrimary)) {
-                logger.debug("Setting as primary image, removing existing primary flags");
+                log.debug("Setting as primary image, removing existing primary flags");
                 removePrimaryFlag(listing);
             }
 
-            logger.debug("Saving image entity to database");
+            log.debug("Saving image entity to database");
             ListingImage image = buildListingImage(
                     listing, imageUrl, thumbnailUrl, imageKey,
                     displayOrder, file, isPrimary);
             imageRepository.save(image);
 
-            logger.info("Image added successfully to listing {}: {}", listingId, imageKey);
+            log.info("Image added successfully to listing {}: {}", listingId, imageKey);
 
             return imageMapper.toResponse(image);
 
         } catch (ListingImageException e) {
-            logger.error("ListingImageException for listing {}: {}", listingId, e.getMessage(), e);
+            log.error("ListingImageException for listing {}: {}", listingId, e.getMessage(), e);
             throw e;
         } catch (Exception e) {
-            logger.error("Unexpected error during image processing for listing {}: {}", listingId, e.getMessage(), e);
+            log.error("Unexpected error during image processing for listing {}: {}", listingId, e.getMessage(), e);
             throw new ListingImageException("Unexpected error processing image", e);
         }
     }
 
     @Transactional
     public void deleteImage(UUID listingId, UUID imageId) {
-        logger.info("Deleting image {} from listing {}", imageId, listingId);
+        log.info("Deleting image {} from listing {}", imageId, listingId);
 
         ListingImage image = imageRepository.findById(imageId)
                 .orElseThrow(() -> new ListingImageException("Image not found"));
@@ -157,12 +157,12 @@ public class ListingImageService {
         storageService.delete(image.getStorageKey());
         imageRepository.delete(image);
 
-        logger.info("Image deleted successfully from listing {}: {}", listingId, imageId);
+        log.info("Image deleted successfully from listing {}: {}", listingId, imageId);
     }
 
     @Transactional
     public void setPrimaryImage(UUID listingId, UUID imageId) {
-        logger.info("Setting primary image {} for listing {}", imageId, listingId);
+        log.info("Setting primary image {} for listing {}", imageId, listingId);
 
         MaterialListing listing = findListingOrThrow(listingId);
         ListingImage image = findImageOrThrow(imageId);
@@ -173,12 +173,12 @@ public class ListingImageService {
         image.setIsPrimary(true);
         imageRepository.save(image);
 
-        logger.info("Primary image set successfully for listing {}: {}", listingId, imageId);
+        log.info("Primary image set successfully for listing {}: {}", listingId, imageId);
     }
 
     @Transactional
     public void reorderImages(UUID listingId, List<UUID> imageIds) {
-        logger.info("Reordering {} images for listing {}", imageIds.size(), listingId);
+        log.info("Reordering {} images for listing {}", imageIds.size(), listingId);
 
         MaterialListing listing = findListingOrThrow(listingId);
         List<ListingImage> images = imageRepository.findByListingOrderByDisplayOrderAsc(listing);
@@ -191,12 +191,12 @@ public class ListingImageService {
             imageRepository.save(image);
         }
 
-        logger.info("Images reordered successfully for listing {}", listingId);
+        log.info("Images reordered successfully for listing {}", listingId);
     }
 
     @Transactional(readOnly = true)
     public List<ImageResponse> getListingImages(UUID listingId) {
-        logger.debug("Retrieving images for listing {}", listingId);
+        log.debug("Retrieving images for listing {}", listingId);
         return imageRepository.findByListingIdOrderByDisplayOrderAsc(listingId)
                 .stream()
                 .map(imageMapper::toResponse)
@@ -248,14 +248,14 @@ public class ListingImageService {
 
     @Transactional
     protected void removePrimaryFlag(MaterialListing listing) {
-        logger.debug("Removing primary flag from existing images for listing");
+        log.debug("Removing primary flag from existing images for listing");
 
         int updated = imageRepository.removeAllPrimaryFlags(listing);
 
         if (updated > 0) {
-            logger.debug("Primary flag removed from {} images", updated);
+            log.debug("Primary flag removed from {} images", updated);
         } else {
-            logger.debug("No primary images found to update");
+            log.debug("No primary images found to update");
         }
 
     }

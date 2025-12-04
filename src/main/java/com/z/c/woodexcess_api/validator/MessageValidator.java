@@ -2,11 +2,12 @@ package com.z.c.woodexcess_api.validator;
 
 import com.z.c.woodexcess_api.exception.listing.ListingNotFoundException;
 import com.z.c.woodexcess_api.exception.users.UserNotFoundException;
-import com.z.c.woodexcess_api.repository.ListingImageRepository;
+import com.z.c.woodexcess_api.repository.MaterialListingRepository;
 import com.z.c.woodexcess_api.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
 import java.util.UUID;
 
 @Component
@@ -15,7 +16,7 @@ import java.util.UUID;
 public class MessageValidator {
 
     private final UserRepository userRepository;
-    private final ListingImageRepository listingRepository;
+    private final MaterialListingRepository listingRepository;
 
     public void validateUserExists(UUID userId, String errorMessage){
         if (!userRepository.existsById(userId)) {
