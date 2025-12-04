@@ -3,6 +3,7 @@ package com.z.c.woodexcess_api.controller;
 import com.z.c.woodexcess_api.dto.message.ConversationResponse;
 import com.z.c.woodexcess_api.dto.message.MessageRequest;
 import com.z.c.woodexcess_api.dto.message.MessageResponse;
+import com.z.c.woodexcess_api.security.CustomUserDetails; // ✅ ADICIONAR IMPORT
 import com.z.c.woodexcess_api.service.message.MessageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -19,7 +20,6 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -46,10 +46,10 @@ public class MessageController {
     @ApiResponse(responseCode = "400", description = "Invalid request or trying to message yourself")
     @ApiResponse(responseCode = "404", description = "Recipient or listing not found")
     public ResponseEntity<MessageResponse> sendMessage(
-            @AuthenticationPrincipal UserDetails userDetails,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody MessageRequest request) {
 
-        UUID senderId = UUID.fromString(userDetails.getUsername());
+        UUID senderId = userDetails.getId();
         MessageResponse response = messageService.sendMessage(senderId, request);
 
         log.info("Message sent from {} to {}", senderId, request.recipientId());
@@ -64,13 +64,13 @@ public class MessageController {
     @ApiResponse(responseCode = "200", description = "Conversation retrieved successfully")
     @ApiResponse(responseCode = "404", description = "User or listing not found")
     public ResponseEntity<List<MessageResponse>> getConversation(
-            @AuthenticationPrincipal UserDetails userDetails,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @Parameter(description = "Other user ID in the conversation")
             @RequestParam UUID otherUserId,
             @Parameter(description = "Listing ID context")
             @RequestParam UUID listingId) {
 
-        UUID currentUserId = UUID.fromString(userDetails.getUsername());
+        UUID currentUserId = userDetails.getId();
         List<MessageResponse> messages = messageService.getConversation(
                 currentUserId, otherUserId, listingId
         );
@@ -88,13 +88,13 @@ public class MessageController {
     @ApiResponse(responseCode = "200", description = "Messages retrieved successfully")
     @ApiResponse(responseCode = "404", description = "Listing not found")
     public ResponseEntity<Page<MessageResponse>> getMessagesByListing(
-            @AuthenticationPrincipal UserDetails userDetails,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @Parameter(description = "Listing ID")
             @PathVariable UUID listingId,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
             Pageable pageable) {
 
-        UUID userId = UUID.fromString(userDetails.getUsername());
+        UUID userId = userDetails.getId();
         Page<MessageResponse> messages = messageService.getMessagesByListing(
                 listingId, userId, pageable
         );
@@ -110,9 +110,9 @@ public class MessageController {
     )
     @ApiResponse(responseCode = "200", description = "Conversations retrieved successfully")
     public ResponseEntity<List<ConversationResponse>> getRecentConversations(
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        UUID userId = UUID.fromString(userDetails.getUsername());
+        UUID userId = userDetails.getId();
         List<ConversationResponse> conversations = messageService.getRecentConversations(userId);
 
         log.debug("Retrieved {} recent conversations for user {}", conversations.size(), userId);
@@ -127,9 +127,9 @@ public class MessageController {
     )
     @ApiResponse(responseCode = "200", description = "Unread count retrieved successfully")
     public ResponseEntity<Long> getUnreadCount(
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        UUID userId = UUID.fromString(userDetails.getUsername());
+        UUID userId = userDetails.getId();
         Long count = messageService.getUnreadCount(userId);
 
         log.debug("User {} has {} unread messages", userId, count);
@@ -145,13 +145,13 @@ public class MessageController {
     @ApiResponse(responseCode = "204", description = "Messages marked as read successfully")
     @ApiResponse(responseCode = "404", description = "User or listing not found")
     public ResponseEntity<Void> markConversationAsRead(
-            @AuthenticationPrincipal UserDetails userDetails,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @Parameter(description = "Sender user ID")
             @RequestParam UUID senderId,
             @Parameter(description = "Listing ID context")
             @RequestParam UUID listingId) {
 
-        UUID recipientId = UUID.fromString(userDetails.getUsername());
+        UUID recipientId = userDetails.getId();
         messageService.markConversationAsRead(recipientId, senderId, listingId);
 
         log.info("Marked messages as read: recipient={}, sender={}, listing={}",
