@@ -1,6 +1,7 @@
 package com.z.c.woodexcess_api.processor;
 
 import com.z.c.woodexcess_api.exception.listing.ListingImageException;
+import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,9 +14,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 @Component
+@Slf4j
 public class ImageProcessor {
 
-    private static final Logger logger = LoggerFactory.getLogger(ImageProcessor.class);
 
     @Value("${app.listing.thumbnail.width:300}")
     private int thumbnailWidth;
@@ -24,7 +25,7 @@ public class ImageProcessor {
     private int thumbnailHeight;
 
     public byte[] generateThumbnail(byte[] imageBytes) throws IOException {
-        logger.debug("Generating thumbnail: inputSize={} bytes, targetSize={}x{} pixels",
+        log.debug("Generating thumbnail: inputSize={} bytes, targetSize={}x{} pixels",
                 imageBytes.length, thumbnailWidth, thumbnailHeight);
 
         try (ByteArrayInputStream inputStream = new ByteArrayInputStream(imageBytes);
@@ -37,17 +38,17 @@ public class ImageProcessor {
                     .toOutputStream(outputStream);
 
             byte[] result = outputStream.toByteArray();
-            logger.debug("Thumbnail generated successfully: outputSize={} bytes", result.length);
+            log.debug("Thumbnail generated successfully: outputSize={} bytes", result.length);
             return result;
 
         } catch (IOException e) {
-            logger.error("Failed to generate thumbnail: {}", e.getMessage(), e);
+            log.error("Failed to generate thumbnail: {}", e.getMessage(), e);
             throw new ListingImageException("Failed to generate thumbnail", e);
         }
     }
 
     public MultipartFile createMultipartFile(byte[] bytes, String filename) {
-        logger.debug("Creating MultipartFile: filename={}, size={} bytes", filename, bytes.length);
+        log.debug("Creating MultipartFile: filename={}, size={} bytes", filename, bytes.length);
 
         return new MultipartFile() {
             @Override

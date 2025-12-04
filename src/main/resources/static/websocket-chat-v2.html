@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WoodExcess - Chat WebSocket</title>
     
-    <!-- Bibliotecas WebSocket (VERSÕES CORRIGIDAS) -->
+    <!-- Bibliotecas WebSocket -->
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
     
@@ -24,7 +24,7 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 900px;
             margin: 0 auto;
             background: white;
             border-radius: 20px;
@@ -40,8 +40,8 @@
         }
 
         .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
+            font-size: 2em;
+            margin-bottom: 5px;
         }
 
         .content {
@@ -59,33 +59,7 @@
         .section h2 {
             color: #667eea;
             margin-bottom: 20px;
-            font-size: 1.5em;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .status {
-            display: inline-block;
-            padding: 8px 20px;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 0.9em;
-        }
-
-        .status.success {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .status.error {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .status.warning {
-            background: #fff3cd;
-            color: #856404;
+            font-size: 1.3em;
         }
 
         .form-group {
@@ -100,8 +74,6 @@
         }
 
         input[type="text"],
-        input[type="email"],
-        input[type="password"],
         textarea {
             width: 100%;
             padding: 12px;
@@ -145,10 +117,28 @@
             transform: none;
         }
 
-        .button-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
+        .status {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
         }
 
         #messages {
@@ -182,10 +172,12 @@
 
         .message-sent {
             border-left-color: #28a745;
+            background: #d4edda;
         }
 
         .message-received {
             border-left-color: #667eea;
+            background: #e7f3ff;
         }
 
         .message-header {
@@ -202,13 +194,6 @@
             margin: 10px 0;
         }
 
-        .user-info {
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-
         .empty-state {
             text-align: center;
             padding: 40px;
@@ -219,58 +204,46 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🪵 WoodExcess - Chat em Tempo Real</h1>
-            <p>Sistema de mensagens WebSocket com autenticação JWT</p>
+            <h1>🪵 WoodExcess - Chat WebSocket</h1>
+            <p>Teste de mensagens em tempo real</p>
         </div>
 
         <div class="content">
-            <!-- Seção de Login -->
-            <div class="section" id="loginSection">
-                <h2>🔐 1. Login</h2>
+            <!-- Conexão WebSocket -->
+            <div class="section">
+                <h2>🔌 1. Conectar WebSocket</h2>
                 <div class="form-group">
-                    <label for="email">Email:</label>
-                    <input type="email" id="email" placeholder="seu@email.com" value="zabarellaj@gmail.com">
+                    <label for="jwtToken">JWT Token (copie do Postman):</label>
+                    <input type="text" id="jwtToken" placeholder="Cole o accessToken aqui">
                 </div>
-                <div class="form-group">
-                    <label for="password">Senha:</label>
-                    <input type="password" id="password" placeholder="Sua senha" value="Joaoapto10101">
-                </div>
-                <button onclick="login()">Fazer Login</button>
-                <div id="loginStatus" style="margin-top: 15px;"></div>
+                <button id="connectBtn" onclick="toggleConnection()">Conectar</button>
+                <div id="connectionStatus"></div>
             </div>
 
-            <!-- Seção de Conexão WebSocket -->
-            <div class="section" id="connectionSection" style="display: none;">
-                <h2>🔌 2. Conexão WebSocket</h2>
-                <div class="user-info" id="userInfo"></div>
-                <button id="connectBtn" onclick="toggleConnection()">Conectar WebSocket</button>
-                <div id="connectionStatus" style="margin-top: 15px;"></div>
-            </div>
-
-            <!-- Seção de Chat -->
+            <!-- Enviar Mensagem -->
             <div class="section" id="chatSection" style="display: none;">
-                <h2>💬 3. Enviar Mensagem</h2>
+                <h2>💬 2. Enviar Mensagem</h2>
                 <div class="form-group">
                     <label for="recipientId">UUID do Destinatário:</label>
-                    <input type="text" id="recipientId" placeholder="f3e6dcd4-b3f2-4c12-bc1e-ac79568386fa">
+                    <input type="text" id="recipientId" placeholder="UUID do outro usuário">
                 </div>
                 <div class="form-group">
                     <label for="listingId">UUID do Anúncio:</label>
-                    <input type="text" id="listingId" placeholder="7ab8c7bc-ef56-49d3-9acd-2f3b8ac9f36b">
+                    <input type="text" id="listingId" placeholder="UUID do material_listing">
                 </div>
                 <div class="form-group">
                     <label for="messageContent">Mensagem:</label>
-                    <textarea id="messageContent" placeholder="Digite sua mensagem aqui..."></textarea>
+                    <textarea id="messageContent" placeholder="Digite sua mensagem..."></textarea>
                 </div>
-                <button onclick="sendMessage()" id="sendBtn">Enviar Mensagem</button>
+                <button onclick="sendMessage()" id="sendBtn">Enviar</button>
             </div>
 
-            <!-- Seção de Mensagens -->
+            <!-- Mensagens -->
             <div class="section" id="messagesSection" style="display: none;">
-                <h2>📨 4. Mensagens</h2>
+                <h2>📨 3. Mensagens</h2>
                 <div id="messages">
                     <div class="empty-state">
-                        <p>Nenhuma mensagem ainda. Envie a primeira!</p>
+                        <p>Nenhuma mensagem ainda...</p>
                     </div>
                 </div>
             </div>
@@ -280,58 +253,8 @@
     <script>
         let stompClient = null;
         let isConnected = false;
-        let currentToken = null;
-        let currentUser = null;
 
-        // Login
-        async function login() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-
-            if (!email || !password) {
-                alert('Preencha email e senha!');
-                return;
-            }
-
-            try {
-                const response = await fetch('http://localhost:8080/api/auth/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ email, password })
-                });
-
-                if (!response.ok) {
-                    throw new Error('Login falhou!');
-                }
-
-                const data = await response.json();
-                currentToken = data.accessToken;
-                currentUser = data.user;
-
-                document.getElementById('loginStatus').innerHTML = 
-                    '<span class="status success">✅ Login realizado com sucesso!</span>';
-                
-                document.getElementById('userInfo').innerHTML = `
-                    <strong>Usuário logado:</strong> ${currentUser.name}<br>
-                    <strong>Email:</strong> ${currentUser.email}<br>
-                    <strong>ID:</strong> ${currentUser.id}
-                `;
-
-                document.getElementById('loginSection').style.display = 'none';
-                document.getElementById('connectionSection').style.display = 'block';
-                document.getElementById('chatSection').style.display = 'block';
-                document.getElementById('messagesSection').style.display = 'block';
-
-            } catch (error) {
-                console.error('Erro no login:', error);
-                document.getElementById('loginStatus').innerHTML = 
-                    '<span class="status error">❌ Erro: ' + error.message + '</span>';
-            }
-        }
-
-        // Conectar/Desconectar WebSocket
+        // Toggle Conectar/Desconectar
         function toggleConnection() {
             if (isConnected) {
                 disconnect();
@@ -341,41 +264,45 @@
         }
 
         // Conectar WebSocket
-        async function connect() {
-            if (!currentToken) {
-                alert('Faça login primeiro!');
+        function connect() {
+            const token = document.getElementById('jwtToken').value.trim();
+            
+            if (!token) {
+                alert('Cole o JWT Token primeiro!');
                 return;
             }
 
             try {
                 updateStatus('Conectando...', 'warning');
-                console.log('Iniciando conexão com SockJS...');
+                console.log('Conectando ao WebSocket...');
 
                 stompClient = new StompJs.Client({
                     webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
                     connectHeaders: {
-                        'Authorization': `Bearer ${currentToken}`
+                        'Authorization': `Bearer ${token}`
                     },
                     debug: (str) => {
-                        console.log('STOMP Debug:', str);
+                        console.log('STOMP:', str);
                     },
                     onConnect: (frame) => {
-                        console.log('✅ Conectado ao WebSocket!', frame);
+                        console.log('✅ Conectado!', frame);
                         isConnected = true;
-                        updateStatus('Conectado', 'success');
-                        document.getElementById('connectBtn').textContent = 'Desconectar WebSocket';
+                        updateStatus('✅ Conectado', 'success');
+                        document.getElementById('connectBtn').textContent = 'Desconectar';
+                        document.getElementById('chatSection').style.display = 'block';
+                        document.getElementById('messagesSection').style.display = 'block';
                         subscribeToMessages();
                     },
                     onStompError: (frame) => {
                         console.error('❌ Erro STOMP:', frame);
-                        updateStatus(`Erro: ${frame.headers.message || 'Erro desconhecido'}`, 'error');
+                        updateStatus(`❌ Erro: ${frame.headers.message || 'Autenticação falhou'}`, 'error');
                         isConnected = false;
                     },
                     onWebSocketClose: () => {
                         console.log('WebSocket fechado');
                         isConnected = false;
-                        updateStatus('Desconectado', 'error');
-                        document.getElementById('connectBtn').textContent = 'Conectar WebSocket';
+                        updateStatus('⚪ Desconectado', 'error');
+                        document.getElementById('connectBtn').textContent = 'Conectar';
                     }
                 });
 
@@ -383,7 +310,7 @@
 
             } catch (error) {
                 console.error('Erro ao conectar:', error);
-                updateStatus(`Erro: ${error.message}`, 'error');
+                updateStatus(`❌ Erro: ${error.message}`, 'error');
                 isConnected = false;
             }
         }
@@ -393,8 +320,9 @@
             if (stompClient) {
                 stompClient.deactivate();
                 isConnected = false;
-                updateStatus('Desconectado', 'error');
-                document.getElementById('connectBtn').textContent = 'Conectar WebSocket';
+                updateStatus('⚪ Desconectado', 'error');
+                document.getElementById('connectBtn').textContent = 'Conectar';
+                document.getElementById('chatSection').style.display = 'none';
                 console.log('Desconectado');
             }
         }
@@ -407,12 +335,12 @@
                     const parsedMessage = JSON.parse(message.body);
                     displayMessage(parsedMessage, 'received');
                 } catch (error) {
-                    console.error('Erro ao fazer parse da mensagem:', error);
+                    console.error('Erro ao fazer parse:', error);
                 }
             });
 
             stompClient.subscribe('/user/queue/typing', (notification) => {
-                console.log('✍️ Typing notification:', JSON.parse(notification.body));
+                console.log('✍️ Typing:', JSON.parse(notification.body));
             });
         }
 
@@ -423,9 +351,9 @@
                 return;
             }
 
-            const recipientId = document.getElementById('recipientId').value;
-            const listingId = document.getElementById('listingId').value;
-            const content = document.getElementById('messageContent').value;
+            const recipientId = document.getElementById('recipientId').value.trim();
+            const listingId = document.getElementById('listingId').value.trim();
+            const content = document.getElementById('messageContent').value.trim();
 
             if (!recipientId || !listingId || !content) {
                 alert('Preencha todos os campos!');
@@ -438,16 +366,17 @@
                 content: content
             };
 
-            console.log('📤 Enviando mensagem:', message);
+            console.log('📤 Enviando:', message);
             stompClient.publish({
                 destination: '/app/chat.send',
                 body: JSON.stringify(message)
             });
 
+            // Limpa campo
             document.getElementById('messageContent').value = '';
         }
 
-        // Exibir mensagem na tela
+        // Exibir mensagem
         function displayMessage(message, type) {
             const messagesDiv = document.getElementById('messages');
             
@@ -462,13 +391,12 @@
             
             messageElement.innerHTML = `
                 <div class="message-header">
-                    <span><strong>${type === 'sent' ? 'Você' : message.senderName || 'Usuário'}</strong></span>
+                    <span><strong>${type === 'sent' ? '📤 Você' : '📨 ' + (message.senderName || 'Usuário')}</strong></span>
                     <span>${new Date(message.timestamp || Date.now()).toLocaleString()}</span>
                 </div>
                 <div class="message-content">${message.content}</div>
-                <div style="font-size: 0.85em; color: #6c757d; margin-top: 5px;">
-                    <strong>Anúncio:</strong> ${message.listingTitle || message.listingId}<br>
-                    <strong>ID:</strong> ${message.id || 'N/A'}
+                <div style="font-size: 0.85em; color: #6c757d; margin-top: 8px;">
+                    <strong>Anúncio:</strong> ${message.listingTitle || message.listingId}
                 </div>
             `;
             

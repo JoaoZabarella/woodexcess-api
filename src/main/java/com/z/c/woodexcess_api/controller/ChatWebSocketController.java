@@ -3,6 +3,7 @@ package com.z.c.woodexcess_api.controller;
 import com.z.c.woodexcess_api.dto.message.ChatMessageDTO;
 import com.z.c.woodexcess_api.dto.message.MessageRequest;
 import com.z.c.woodexcess_api.dto.message.MessageResponse;
+import com.z.c.woodexcess_api.security.CustomUserDetails;
 import com.z.c.woodexcess_api.service.message.MessageService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -10,14 +11,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Controller;
 
+import java.security.Principal;
 import java.util.UUID;
-
-import static java.util.UUID.fromString;
-
 
 @Controller
 @RequiredArgsConstructor
@@ -30,9 +28,11 @@ public class ChatWebSocketController {
     @MessageMapping("/chat.send")
     public void sendMessage(
             @Valid @Payload ChatMessageDTO chatMessage,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            Principal principal) {
 
-        UUID senderId = fromString(userDetails.getUsername());
+        CustomUserDetails userDetails = (CustomUserDetails)
+                ((UsernamePasswordAuthenticationToken) principal).getPrincipal();
+        UUID senderId = userDetails.getId();
 
         log.info("WebSocket message from {} to {} about listing {}",
                 senderId, chatMessage.recipientId(), chatMessage.listingId());
@@ -46,28 +46,29 @@ public class ChatWebSocketController {
         MessageResponse saved = messageService.sendMessage(senderId, request);
         ChatMessageDTO payload = ChatMessageDTO.fromMessageResponse(saved);
 
-        // Recipient
+        String senderEmail = userDetails.getUsername();
+
         messagingTemplate.convertAndSendToUser(
-                saved.recipientId().toString(),
+                saved.recipientEmail(),
                 "/queue/messages",
                 payload
         );
 
-        // Sender
         messagingTemplate.convertAndSendToUser(
-                saved.senderId().toString(),
+                senderEmail,
                 "/queue/messages",
                 payload
         );
     }
 
-
     @MessageMapping("/chat.typing")
     public void typing(
             @Payload ChatMessageDTO typing,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            Principal principal) {
 
-        UUID senderId = fromString(userDetails.getUsername());
+        CustomUserDetails userDetails = (CustomUserDetails)
+                ((UsernamePasswordAuthenticationToken) principal).getPrincipal();
+        UUID senderId = userDetails.getId();
 
         log.debug("Typing notification from {} to {} (listing={})",
                 senderId, typing.recipientId(), typing.listingId());
@@ -79,5 +80,5 @@ public class ChatWebSocketController {
         );
     }
 
-    private record  TypingNotification(UUID userId, UUID listingId) {}
+    private record TypingNotification(UUID userId, UUID listingId) {}
 }

@@ -7,7 +7,7 @@ import com.z.c.woodexcess_api.mapper.MessageMapper;
 import com.z.c.woodexcess_api.model.MaterialListing;
 import com.z.c.woodexcess_api.model.Message;
 import com.z.c.woodexcess_api.model.User;
-import com.z.c.woodexcess_api.repository.ListingRepository;  // ✅ CORRETO
+import com.z.c.woodexcess_api.repository.MaterialListingRepository;
 import com.z.c.woodexcess_api.repository.MessageRepository;
 import com.z.c.woodexcess_api.repository.UserRepository;
 import com.z.c.woodexcess_api.validator.MessageValidator;
@@ -21,12 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Service for message business logic.
- * Handles message creation, retrieval, and status updates.
- * All queries use optimized repository methods with EntityGraph to prevent N+1.
- * Validation logic is delegated to MessageValidator for cleaner code.
- */
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -34,17 +29,11 @@ public class MessageService {
 
     private final MessageRepository messageRepository;
     private final UserRepository userRepository;
-    private final ListingRepository listingRepository;
+    private final MaterialListingRepository listingRepository;
     private final MessageMapper messageMapper;
     private final MessageValidator validator;
 
-    /**
-     * Sends a new message from sender to recipient about a listing.
-     *
-     * @param senderId ID of the user sending the message (from JWT)
-     * @param request Message content and recipient info
-     * @return Created message with full details
-     */
+
     @Transactional
     public MessageResponse sendMessage(UUID senderId, MessageRequest request) {
         log.info("Sending message from user {} to user {} about listing {}",

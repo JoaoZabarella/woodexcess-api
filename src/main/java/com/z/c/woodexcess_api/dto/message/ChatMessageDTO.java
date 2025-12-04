@@ -25,6 +25,7 @@ public record ChatMessageDTO(
 
         UUID senderId,
         String senderName,
+        String listingTitle,
         LocalDateTime timesTamp
 
 ) {
@@ -37,6 +38,7 @@ public record ChatMessageDTO(
                 message.content(),
                 message.senderId(),
                 message.senderName(),
+                message.listingTitle(),
                 message.createdAt()
         );
     }
