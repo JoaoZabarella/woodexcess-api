@@ -65,3 +65,7 @@ logging:
   level:
     root: INFO
     com.z.c.woodexcess_api: DEBUG
+
+# WebSocket
+websocket:
+  allowed-origins: ${WEBSOCKET_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
