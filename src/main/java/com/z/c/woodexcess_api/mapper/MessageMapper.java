@@ -13,8 +13,10 @@ public class MessageMapper {
         return new MessageResponse(
                 message.getId(),
                 message.getSender().getId(),
+                message.getSender().getEmail(),
                 message.getSender().getName(),
                 message.getRecipient().getId(),
+                message.getRecipient().getEmail(),
                 message.getRecipient().getName(),
                 message.getListing().getId(),
                 message.getListing().getTitle(),
@@ -23,9 +25,7 @@ public class MessageMapper {
                 message.getCreatedAt(),
                 message.getUpdatedAt()
         );
-
     }
-
 
     public ConversationResponse toConversationResponse(
             Message message,
@@ -47,8 +47,5 @@ public class MessageMapper {
                 unreadCount,
                 null
         );
-
     }
-
-
 }

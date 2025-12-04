@@ -1,10 +1,8 @@
 package com.z.c.woodexcess_api.dto.message;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.AllArgsConstructor;
+import com.z.c.woodexcess_api.model.Message;
 import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -15,9 +13,11 @@ public record MessageResponse (
 
      UUID id,
      UUID senderId,
+     String senderEmail,
      String senderName,
-     UUID receiverId,
-     String receiverName,
+     UUID recipientId,
+     String recipientEmail,
+     String recipientName,
      UUID listingId,
      String listingTitle,
      String content,
@@ -28,5 +28,21 @@ public record MessageResponse (
     LocalDateTime updatedAt
 
     ){
-
+    public static MessageResponse fromMessage(Message message) {
+        return MessageResponse.builder()
+                .id(message.getId())
+                .senderId(message.getSender().getId())
+                .senderEmail(message.getSender().getEmail())
+                .senderName(message.getSender().getName())
+                .recipientId(message.getRecipient().getId())
+                .recipientEmail(message.getRecipient().getEmail())
+                .recipientName(message.getRecipient().getName())
+                .listingId(message.getListing().getId())
+                .listingTitle(message.getListing().getTitle())
+                .content(message.getContent())
+                .isRead(message.getIsRead())
+                .createdAt(message.getCreatedAt())
+                .updatedAt(message.getUpdatedAt())
+                .build();
+    }
 }
