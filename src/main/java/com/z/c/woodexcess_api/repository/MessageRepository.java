@@ -16,8 +16,6 @@ import java.util.UUID;
 @Repository
 public interface MessageRepository extends JpaRepository<Message, UUID> {
 
-
-
     @Query("""
         SELECT CASE WHEN EXISTS (
             SELECT 1
@@ -114,4 +112,23 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
         ORDER BY m.createdAt DESC
     """)
     List<Message> findRecentConversations(@Param("userId") UUID userId);
+
+
+    @EntityGraph(attributePaths = {"sender", "recipient", "listing"})
+    @Query("""
+    SELECT m FROM Message m
+    WHERE m.listing.id = :listingId
+    AND (
+        (m.sender.id = :senderId AND m.recipient.id = :recipientId)
+        OR (m.sender.id = :recipientId AND m.recipient.id = :senderId)
+    )
+    ORDER BY m.createdAt ASC
+""")
+    Page<Message> findConversationOptimized(
+            @Param("senderId") UUID senderId,
+            @Param("recipientId") UUID recipientId,
+            @Param("listingId") UUID listingId,
+            Pageable pageable
+    );
+
 }
