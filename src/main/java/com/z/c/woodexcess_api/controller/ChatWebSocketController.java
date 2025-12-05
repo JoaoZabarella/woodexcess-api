@@ -30,35 +30,67 @@ public class ChatWebSocketController {
             @Valid @Payload ChatMessageDTO chatMessage,
             Principal principal) {
 
-        CustomUserDetails userDetails = (CustomUserDetails)
-                ((UsernamePasswordAuthenticationToken) principal).getPrincipal();
+        if (principal == null) {
+            log.error("WebSocket message received without authentication (principal is null)");
+            return;
+        }
+
+        log.debug("Principal type: {}, name: {}",
+                principal.getClass().getSimpleName(), principal.getName());
+
+        if (!(principal instanceof UsernamePasswordAuthenticationToken)) {
+            log.error("Unexpected principal type: {}", principal.getClass().getName());
+            return;
+        }
+
+        UsernamePasswordAuthenticationToken authToken =
+                (UsernamePasswordAuthenticationToken) principal;
+
+        Object principalObj = authToken.getPrincipal();
+        if (principalObj == null) {
+            log.error("Authentication token has null principal");
+            return;
+        }
+
+        if (!(principalObj instanceof CustomUserDetails)) {
+            log.error("Principal is not CustomUserDetails: {}", principalObj.getClass().getName());
+            return;
+        }
+
+        CustomUserDetails userDetails = (CustomUserDetails) principalObj;
         UUID senderId = userDetails.getId();
 
-        log.info("WebSocket message from {} to {} about listing {}",
-                senderId, chatMessage.recipientId(), chatMessage.listingId());
+        log.info("WebSocket message from {} (ID: {}) to {} about listing {}",
+                userDetails.getUsername(), senderId,
+                chatMessage.recipientId(), chatMessage.listingId());
 
-        MessageRequest request = new MessageRequest(
-                chatMessage.recipientId(),
-                chatMessage.listingId(),
-                chatMessage.content()
-        );
+        try {
+            MessageRequest request = new MessageRequest(
+                    chatMessage.recipientId(),
+                    chatMessage.listingId(),
+                    chatMessage.content()
+            );
 
-        MessageResponse saved = messageService.sendMessage(senderId, request);
-        ChatMessageDTO payload = ChatMessageDTO.fromMessageResponse(saved);
+            MessageResponse saved = messageService.sendMessage(senderId, request);
+            ChatMessageDTO payload = ChatMessageDTO.fromMessageResponse(saved);
 
-        String senderEmail = userDetails.getUsername();
+            messagingTemplate.convertAndSendToUser(
+                    saved.recipientEmail(),
+                    "/queue/messages",
+                    payload
+            );
 
-        messagingTemplate.convertAndSendToUser(
-                saved.recipientEmail(),
-                "/queue/messages",
-                payload
-        );
+            messagingTemplate.convertAndSendToUser(
+                    userDetails.getUsername(),
+                    "/queue/messages",
+                    payload
+            );
 
-        messagingTemplate.convertAndSendToUser(
-                senderEmail,
-                "/queue/messages",
-                payload
-        );
+            log.info("Message delivered successfully");
+
+        } catch (Exception e) {
+            log.error("Failed to send message via WebSocket: {}", e.getMessage(), e);
+        }
     }
 
     @MessageMapping("/chat.typing")
@@ -66,18 +98,27 @@ public class ChatWebSocketController {
             @Payload ChatMessageDTO typing,
             Principal principal) {
 
-        CustomUserDetails userDetails = (CustomUserDetails)
-                ((UsernamePasswordAuthenticationToken) principal).getPrincipal();
-        UUID senderId = userDetails.getId();
+        if (principal == null) {
+            log.warn("Typing notification without authentication");
+            return;
+        }
 
-        log.debug("Typing notification from {} to {} (listing={})",
-                senderId, typing.recipientId(), typing.listingId());
+        try {
+            CustomUserDetails userDetails = (CustomUserDetails)
+                    ((UsernamePasswordAuthenticationToken) principal).getPrincipal();
+            UUID senderId = userDetails.getId();
 
-        messagingTemplate.convertAndSendToUser(
-                typing.recipientId().toString(),
-                "/queue/typing",
-                new TypingNotification(senderId, typing.listingId())
-        );
+            log.debug("Typing notification from {} to {} (listing={})",
+                    senderId, typing.recipientId(), typing.listingId());
+
+            messagingTemplate.convertAndSendToUser(
+                    typing.recipientId().toString(),
+                    "/queue/typing",
+                    new TypingNotification(senderId, typing.listingId())
+            );
+        } catch (Exception e) {
+            log.error("Failed to process typing notification: {}", e.getMessage());
+        }
     }
 
     private record TypingNotification(UUID userId, UUID listingId) {}
