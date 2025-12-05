@@ -3,12 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WoodExcess - Chat WebSocket</title>
-    
-    <!-- Bibliotecas WebSocket -->
-    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+    <title>WoodExcess - Chat em Tempo Real</title>
     <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
-    
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -20,15 +17,18 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             padding: 20px;
         }
 
         .container {
-            max-width: 900px;
-            margin: 0 auto;
             background: white;
             border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
             overflow: hidden;
         }
 
@@ -40,8 +40,29 @@
         }
 
         .header h1 {
-            font-size: 2em;
-            margin-bottom: 5px;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+
+        .status.success {
+            background: #10b981;
+        }
+
+        .status.error {
+            background: #ef4444;
+        }
+
+        .status.warning {
+            background: #f59e0b;
         }
 
         .content {
@@ -49,120 +70,108 @@
         }
 
         .section {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 25px;
-            border: 2px solid #e9ecef;
+            margin-bottom: 30px;
         }
 
-        .section h2 {
-            color: #667eea;
-            margin-bottom: 20px;
-            font-size: 1.3em;
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .form-group {
+        .input-group {
             margin-bottom: 15px;
         }
 
         label {
             display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #4b5563;
             margin-bottom: 8px;
-            font-weight: 600;
-            color: #495057;
         }
 
-        input[type="text"],
-        textarea {
+        input, textarea {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            font-size: 1em;
-            transition: border-color 0.3s;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        input:focus,
-        textarea:focus {
+        input:focus, textarea:focus {
             outline: none;
             border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
         textarea {
             resize: vertical;
-            min-height: 80px;
+            min-height: 100px;
         }
 
         button {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            padding: 12px 30px;
-            border-radius: 8px;
-            font-size: 1em;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: all 0.3s;
+            width: 100%;
         }
 
         button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
         }
 
         button:disabled {
-            background: #6c757d;
+            background: #9ca3af;
             cursor: not-allowed;
             transform: none;
         }
 
-        .status {
-            display: inline-block;
-            padding: 8px 20px;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 0.9em;
-            margin-top: 10px;
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
         }
 
-        .status.success {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .status.error {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .status.warning {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        #messages {
-            background: white;
-            border: 2px solid #e9ecef;
+        .chat-container {
+            border: 2px solid #e5e7eb;
             border-radius: 10px;
-            padding: 20px;
-            max-height: 500px;
+            height: 400px;
             overflow-y: auto;
+            padding: 20px;
+            background: #f9fafb;
+            margin-bottom: 15px;
         }
 
         .message {
-            background: #f8f9fa;
-            border-left: 4px solid #667eea;
-            padding: 15px;
             margin-bottom: 15px;
-            border-radius: 8px;
-            animation: slideIn 0.3s ease;
+            padding: 12px 16px;
+            border-radius: 10px;
+            max-width: 70%;
+            animation: fadeIn 0.3s;
         }
 
-        @keyframes slideIn {
+        @keyframes fadeIn {
             from {
                 opacity: 0;
-                transform: translateY(-10px);
+                transform: translateY(10px);
             }
             to {
                 opacity: 1;
@@ -170,245 +179,442 @@
             }
         }
 
-        .message-sent {
-            border-left-color: #28a745;
-            background: #d4edda;
+        .message.sent {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin-left: auto;
+            text-align: right;
         }
 
-        .message-received {
-            border-left-color: #667eea;
-            background: #e7f3ff;
+        .message.received {
+            background: white;
+            color: #1f2937;
+            border: 2px solid #e5e7eb;
         }
 
         .message-header {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 10px;
-            font-size: 0.9em;
-            color: #6c757d;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        .message.sent .message-header {
+            flex-direction: row-reverse;
+        }
+
+        .message-time {
+            opacity: 0.7;
+            font-size: 11px;
         }
 
         .message-content {
-            font-size: 1.1em;
-            color: #212529;
-            margin: 10px 0;
+            font-size: 14px;
+            line-height: 1.5;
+            word-wrap: break-word;
         }
 
         .empty-state {
             text-align: center;
+            color: #9ca3af;
             padding: 40px;
-            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .code-hint {
+            background: #f3f4f6;
+            border-left: 4px solid #667eea;
+            padding: 12px;
+            border-radius: 5px;
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 8px;
+        }
+
+        .divider {
+            height: 1px;
+            background: #e5e7eb;
+            margin: 30px 0;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🪵 WoodExcess - Chat WebSocket</h1>
-            <p>Teste de mensagens em tempo real</p>
+<div class="container">
+    <div class="header">
+        <h1>💬 WoodExcess Chat</h1>
+        <p>Sistema de Mensagens em Tempo Real</p>
+        <div class="status warning" id="connectionStatus">Desconectado</div>
+    </div>
+
+    <div class="content">
+        <!-- SEÇÃO 1: Autenticação -->
+        <div class="section">
+            <div class="section-title">
+                🔐 1. Autenticação
+            </div>
+            <div class="input-group">
+                <label for="jwtToken">JWT Token (do login)</label>
+                <textarea
+                        id="jwtToken"
+                        placeholder="Cole aqui o accessToken do endpoint /api/auth/login"
+                        rows="3"
+                ></textarea>
+                <div class="code-hint">
+                    💡 Faça POST /api/auth/login no Postman e copie o "accessToken"
+                </div>
+            </div>
+            <div class="button-group">
+                <button onclick="connect()">🔌 Conectar</button>
+                <button onclick="disconnect()">🔌 Desconectar</button>
+            </div>
         </div>
 
-        <div class="content">
-            <!-- Conexão WebSocket -->
-            <div class="section">
-                <h2>🔌 1. Conectar WebSocket</h2>
-                <div class="form-group">
-                    <label for="jwtToken">JWT Token (copie do Postman):</label>
-                    <input type="text" id="jwtToken" placeholder="Cole o accessToken aqui">
-                </div>
-                <button id="connectBtn" onclick="toggleConnection()">Conectar</button>
-                <div id="connectionStatus"></div>
-            </div>
+        <div class="divider"></div>
 
-            <!-- Enviar Mensagem -->
-            <div class="section" id="chatSection" style="display: none;">
-                <h2>💬 2. Enviar Mensagem</h2>
-                <div class="form-group">
-                    <label for="recipientId">UUID do Destinatário:</label>
-                    <input type="text" id="recipientId" placeholder="UUID do outro usuário">
-                </div>
-                <div class="form-group">
-                    <label for="listingId">UUID do Anúncio:</label>
-                    <input type="text" id="listingId" placeholder="UUID do material_listing">
-                </div>
-                <div class="form-group">
-                    <label for="messageContent">Mensagem:</label>
-                    <textarea id="messageContent" placeholder="Digite sua mensagem..."></textarea>
-                </div>
-                <button onclick="sendMessage()" id="sendBtn">Enviar</button>
+        <!-- SEÇÃO 2: Configuração da Conversa -->
+        <div class="section">
+            <div class="section-title">
+                ⚙️ 2. Configuração da Conversa
             </div>
+            <div class="input-group">
+                <label for="recipientId">ID do Destinatário (UUID)</label>
+                <input
+                        type="text"
+                        id="recipientId"
+                        placeholder="f3e6dcd4-b3f2-4c12-bc1e-ac79568386fa"
+                />
+            </div>
+            <div class="input-group">
+                <label for="listingId">ID do Anúncio (UUID)</label>
+                <input
+                        type="text"
+                        id="listingId"
+                        placeholder="7ab8c7bc-ef56-49d3-9acd-2f3b8ac9f36b"
+                />
+            </div>
+            <button onclick="loadConversationHistory()">
+                📚 Carregar Histórico
+            </button>
+        </div>
 
-            <!-- Mensagens -->
-            <div class="section" id="messagesSection" style="display: none;">
-                <h2>📨 3. Mensagens</h2>
-                <div id="messages">
-                    <div class="empty-state">
-                        <p>Nenhuma mensagem ainda...</p>
-                    </div>
+        <div class="divider"></div>
+
+        <!-- SEÇÃO 3: Chat -->
+        <div class="section">
+            <div class="section-title">
+                💬 3. Mensagens
+            </div>
+            <div class="chat-container" id="chatMessages">
+                <div class="empty-state">
+                    Nenhuma mensagem ainda...
                 </div>
+            </div>
+            <div class="input-group">
+                <label for="messageContent">Sua mensagem</label>
+                <textarea
+                        id="messageContent"
+                        placeholder="Digite sua mensagem aqui..."
+                        rows="3"
+                ></textarea>
+            </div>
+            <div class="button-group">
+                <button onclick="sendMessage()">📤 Enviar Mensagem</button>
+                <button onclick="clearChat()">🗑️ Limpar Chat</button>
             </div>
         </div>
     </div>
+</div>
 
-    <script>
-        let stompClient = null;
-        let isConnected = false;
+<script>
+    let stompClient = null;
+    let isConnected = false;
+    let currentUserEmail = null;
 
-        // Toggle Conectar/Desconectar
-        function toggleConnection() {
-            if (isConnected) {
-                disconnect();
-            } else {
-                connect();
-            }
+    // Atualizar status de conexão
+    function updateStatus(message, type) {
+        const statusDiv = document.getElementById('connectionStatus');
+        statusDiv.textContent = message;
+        statusDiv.className = `status ${type}`;
+    }
+
+    // Conectar ao WebSocket
+    function connect() {
+        const token = document.getElementById('jwtToken').value.trim();
+
+        if (!token) {
+            alert('❌ Cole o JWT Token primeiro!');
+            return;
         }
 
-        // Conectar WebSocket
-        function connect() {
-            const token = document.getElementById('jwtToken').value.trim();
-            
-            if (!token) {
-                alert('Cole o JWT Token primeiro!');
+        // Extrair email do token JWT
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            currentUserEmail = payload.sub;
+            console.log('✅ User email:', currentUserEmail);
+
+            // Verificar expiração
+            const exp = payload.exp * 1000;
+            const now = Date.now();
+
+            if (exp < now) {
+                alert('❌ Token EXPIRADO! Faça login novamente no Postman.');
                 return;
             }
 
+            const timeLeft = Math.floor((exp - now) / 1000 / 60);
+            console.log(`⏰ Token válido por mais ${timeLeft} minutos`);
+
+        } catch (e) {
+            alert('❌ Token inválido! Verifique o formato.');
+            console.error('Erro ao decodificar token:', e);
+            return;
+        }
+
+        updateStatus('Conectando...', 'warning');
+
+        stompClient = new StompJs.Client({
+            webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+            connectHeaders: {
+                'Authorization': `Bearer ${token}`
+            },
+            debug: (str) => {
+                console.log('STOMP:', str);
+            },
+            onConnect: (frame) => {
+                console.log('✅ Conectado ao WebSocket:', frame);
+                isConnected = true;
+                updateStatus(`Conectado (${currentUserEmail})`, 'success');
+                subscribeToMessages();
+
+                // ✅ CARREGAR HISTÓRICO AUTOMATICAMENTE
+                setTimeout(() => {
+                    loadConversationHistory();
+                }, 500);
+            },
+            onStompError: (frame) => {
+                console.error('❌ Erro STOMP:', frame);
+                updateStatus('Erro: ' + (frame.headers['message'] || 'Desconhecido'), 'error');
+                isConnected = false;
+            },
+            onWebSocketClose: () => {
+                console.log('🔌 WebSocket fechado');
+                isConnected = false;
+                updateStatus('Desconectado', 'error');
+            },
+            onWebSocketError: (error) => {
+                console.error('❌ WebSocket error:', error);
+                updateStatus('Erro de conexão', 'error');
+            }
+        });
+
+        stompClient.activate();
+    }
+
+    // Inscrever para receber mensagens
+    function subscribeToMessages() {
+        console.log('📩 Inscrevendo em /user/queue/messages...');
+
+        stompClient.subscribe('/user/queue/messages', (message) => {
+            console.log('📨 Mensagem recebida via WebSocket:', message.body);
             try {
-                updateStatus('Conectando...', 'warning');
-                console.log('Conectando ao WebSocket...');
-
-                stompClient = new StompJs.Client({
-                    webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
-                    connectHeaders: {
-                        'Authorization': `Bearer ${token}`
-                    },
-                    debug: (str) => {
-                        console.log('STOMP:', str);
-                    },
-                    onConnect: (frame) => {
-                        console.log('✅ Conectado!', frame);
-                        isConnected = true;
-                        updateStatus('✅ Conectado', 'success');
-                        document.getElementById('connectBtn').textContent = 'Desconectar';
-                        document.getElementById('chatSection').style.display = 'block';
-                        document.getElementById('messagesSection').style.display = 'block';
-                        subscribeToMessages();
-                    },
-                    onStompError: (frame) => {
-                        console.error('❌ Erro STOMP:', frame);
-                        updateStatus(`❌ Erro: ${frame.headers.message || 'Autenticação falhou'}`, 'error');
-                        isConnected = false;
-                    },
-                    onWebSocketClose: () => {
-                        console.log('WebSocket fechado');
-                        isConnected = false;
-                        updateStatus('⚪ Desconectado', 'error');
-                        document.getElementById('connectBtn').textContent = 'Conectar';
-                    }
-                });
-
-                stompClient.activate();
-
+                const parsedMessage = JSON.parse(message.body);
+                const isReceived = parsedMessage.senderEmail !== currentUserEmail;
+                displayMessage(parsedMessage, isReceived ? 'received' : 'sent');
             } catch (error) {
-                console.error('Erro ao conectar:', error);
-                updateStatus(`❌ Erro: ${error.message}`, 'error');
-                isConnected = false;
+                console.error('❌ Erro ao processar mensagem:', error);
             }
+        });
+
+        stompClient.subscribe('/user/queue/typing', (notification) => {
+            console.log('✍️ Typing notification:', JSON.parse(notification.body));
+        });
+
+        console.log('✅ Inscrições realizadas com sucesso');
+    }
+
+    // Carregar histórico de mensagens (REST API)
+    async function loadConversationHistory() {
+        const recipientId = document.getElementById('recipientId').value.trim();
+        const listingId = document.getElementById('listingId').value.trim();
+
+        if (!recipientId || !listingId) {
+            console.warn('⚠️ Recipient ou Listing não preenchidos');
+            alert('⚠️ Preencha o ID do Destinatário e do Anúncio primeiro!');
+            return;
         }
 
-        // Desconectar
-        function disconnect() {
-            if (stompClient) {
-                stompClient.deactivate();
-                isConnected = false;
-                updateStatus('⚪ Desconectado', 'error');
-                document.getElementById('connectBtn').textContent = 'Conectar';
-                document.getElementById('chatSection').style.display = 'none';
-                console.log('Desconectado');
-            }
-        }
+        const token = document.getElementById('jwtToken').value.trim();
 
-        // Inscrever para receber mensagens
-        function subscribeToMessages() {
-            stompClient.subscribe('/user/queue/messages', (message) => {
-                console.log('📨 Mensagem recebida:', message.body);
-                try {
-                    const parsedMessage = JSON.parse(message.body);
-                    displayMessage(parsedMessage, 'received');
-                } catch (error) {
-                    console.error('Erro ao fazer parse:', error);
+        try {
+            console.log('📚 Carregando histórico de mensagens...');
+            updateStatus('Carregando histórico...', 'warning');
+
+            const response = await fetch(
+                `http://localhost:8080/api/messages/conversation?otherUserId=${recipientId}&listingId=${listingId}`,
+                {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
                 }
-            });
+            );
 
-            stompClient.subscribe('/user/queue/typing', (notification) => {
-                console.log('✍️ Typing:', JSON.parse(notification.body));
-            });
+            if (!response.ok) {
+                if (response.status === 403) {
+                    console.warn('⚠️ Sem permissão para acessar conversa (ainda não existe)');
+                    alert('⚠️ Conversa ainda não existe. Envie a primeira mensagem!');
+                    updateStatus(`Conectado (${currentUserEmail})`, 'success');
+                    return;
+                }
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const messages = await response.json();
+
+            console.log(`✅ ${messages.length} mensagens carregadas`);
+
+            // Limpar chat antes de carregar histórico
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = '';
+
+            if (messages.length === 0) {
+                chatMessages.innerHTML = '<div class="empty-state">Nenhuma mensagem ainda...</div>';
+            } else {
+                // Exibir cada mensagem
+                messages.forEach(msg => {
+                    const isReceived = msg.senderEmail !== currentUserEmail;
+                    displayMessage(msg, isReceived ? 'received' : 'sent');
+                });
+            }
+
+            // Scroll para o final
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            updateStatus(`Conectado (${currentUserEmail})`, 'success');
+
+        } catch (error) {
+            console.error('❌ Erro ao carregar histórico:', error);
+            alert('❌ Erro ao carregar histórico: ' + error.message);
+            updateStatus(`Conectado (${currentUserEmail})`, 'success');
+        }
+    }
+
+    // Enviar mensagem
+    function sendMessage() {
+        if (!isConnected) {
+            alert('❌ Conecte ao WebSocket primeiro!');
+            return;
         }
 
-        // Enviar mensagem
-        function sendMessage() {
-            if (!isConnected) {
-                alert('Conecte ao WebSocket primeiro!');
-                return;
-            }
+        const recipientId = document.getElementById('recipientId').value.trim();
+        const listingId = document.getElementById('listingId').value.trim();
+        const content = document.getElementById('messageContent').value.trim();
 
-            const recipientId = document.getElementById('recipientId').value.trim();
-            const listingId = document.getElementById('listingId').value.trim();
-            const content = document.getElementById('messageContent').value.trim();
+        if (!recipientId || !listingId || !content) {
+            alert('❌ Preencha todos os campos!');
+            return;
+        }
 
-            if (!recipientId || !listingId || !content) {
-                alert('Preencha todos os campos!');
-                return;
-            }
+        const message = {
+            recipientId: recipientId,
+            listingId: listingId,
+            content: content
+        };
 
-            const message = {
-                recipientId: recipientId,
-                listingId: listingId,
-                content: content
-            };
+        console.log('📤 Enviando mensagem:', message);
 
-            console.log('📤 Enviando:', message);
+        try {
             stompClient.publish({
                 destination: '/app/chat.send',
                 body: JSON.stringify(message)
             });
 
-            // Limpa campo
+            console.log('✅ Mensagem enviada para o servidor');
+
+            // Limpar campo de mensagem
             document.getElementById('messageContent').value = '';
+
+        } catch (error) {
+            console.error('❌ Erro ao enviar mensagem:', error);
+            alert('❌ Erro ao enviar mensagem: ' + error.message);
+        }
+    }
+
+    // Exibir mensagem no chat
+    function displayMessage(message, type) {
+        const chatMessages = document.getElementById('chatMessages');
+
+        // Remover estado vazio se existir
+        const emptyState = chatMessages.querySelector('.empty-state');
+        if (emptyState) {
+            emptyState.remove();
         }
 
-        // Exibir mensagem
-        function displayMessage(message, type) {
-            const messagesDiv = document.getElementById('messages');
-            
-            // Remove empty state
-            const emptyState = messagesDiv.querySelector('.empty-state');
-            if (emptyState) {
-                emptyState.remove();
-            }
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${type}`;
 
-            const messageElement = document.createElement('div');
-            messageElement.className = `message message-${type}`;
-            
-            messageElement.innerHTML = `
+        const time = new Date(message.createdAt).toLocaleTimeString('pt-BR', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        const senderName = type === 'received' ? message.senderEmail : 'Você';
+
+        messageDiv.innerHTML = `
                 <div class="message-header">
-                    <span><strong>${type === 'sent' ? '📤 Você' : '📨 ' + (message.senderName || 'Usuário')}</strong></span>
-                    <span>${new Date(message.timestamp || Date.now()).toLocaleString()}</span>
+                    <strong>${senderName}</strong>
+                    <span class="message-time">${time}</span>
                 </div>
-                <div class="message-content">${message.content}</div>
-                <div style="font-size: 0.85em; color: #6c757d; margin-top: 8px;">
-                    <strong>Anúncio:</strong> ${message.listingTitle || message.listingId}
-                </div>
+                <div class="message-content">${escapeHtml(message.content)}</div>
             `;
-            
-            messagesDiv.appendChild(messageElement);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
 
-        // Atualizar status
-        function updateStatus(text, type) {
-            document.getElementById('connectionStatus').innerHTML = 
-                `<span class="status ${type}">${text}</span>`;
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Escape HTML para prevenir XSS
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Desconectar
+    function disconnect() {
+        if (stompClient) {
+            stompClient.deactivate();
+            console.log('🔌 Desconectado');
+            updateStatus('Desconectado', 'error');
+            isConnected = false;
+            currentUserEmail = null;
         }
-    </script>
+    }
+
+    // Limpar chat
+    function clearChat() {
+        const chatMessages = document.getElementById('chatMessages');
+        chatMessages.innerHTML = '<div class="empty-state">Nenhuma mensagem ainda...</div>';
+        console.log('🗑️ Chat limpo');
+    }
+
+    // Permitir enviar com Enter (Shift+Enter para quebra de linha)
+    document.addEventListener('DOMContentLoaded', () => {
+        const messageContent = document.getElementById('messageContent');
+
+        messageContent.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    });
+
+    // Desconectar ao fechar página
+    window.addEventListener('beforeunload', () => {
+        disconnect();
+    });
+</script>
 </body>
 </html>

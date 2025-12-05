@@ -22,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.UUID;
 
@@ -68,7 +69,7 @@ public class MessageController {
             @Parameter(description = "Other user ID in the conversation")
             @RequestParam UUID otherUserId,
             @Parameter(description = "Listing ID context")
-            @RequestParam UUID listingId) {
+            @RequestParam UUID listingId) throws AccessDeniedException {
 
         UUID currentUserId = userDetails.getId();
         List<MessageResponse> messages = messageService.getConversation(
@@ -149,7 +150,7 @@ public class MessageController {
             @Parameter(description = "Sender user ID")
             @RequestParam UUID senderId,
             @Parameter(description = "Listing ID context")
-            @RequestParam UUID listingId) {
+            @RequestParam UUID listingId) throws AccessDeniedException {
 
         UUID recipientId = userDetails.getId();
         messageService.markConversationAsRead(recipientId, senderId, listingId);

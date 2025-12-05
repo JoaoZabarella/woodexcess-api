@@ -18,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.UUID;
 
@@ -61,7 +62,7 @@ public class MessageService {
 
 
     @Transactional(readOnly = true)
-    public List<MessageResponse> getConversation(UUID currentUserId, UUID otherUserId, UUID listingId) {
+    public List<MessageResponse> getConversation(UUID currentUserId, UUID otherUserId, UUID listingId) throws AccessDeniedException {
         log.info("Fetching conversation between {} and {} for listing {}",
                 currentUserId, otherUserId, listingId);
 
@@ -97,7 +98,7 @@ public class MessageService {
 
 
     @Transactional
-    public void markConversationAsRead(UUID recipientId, UUID senderId, UUID listingId) {
+    public void markConversationAsRead(UUID recipientId, UUID senderId, UUID listingId) throws AccessDeniedException {
         log.info("Marking messages as read: recipient={}, sender={}, listing={}",
                 recipientId, senderId, listingId);
 

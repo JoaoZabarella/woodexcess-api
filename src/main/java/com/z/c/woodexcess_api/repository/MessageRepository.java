@@ -17,6 +17,24 @@ import java.util.UUID;
 public interface MessageRepository extends JpaRepository<Message, UUID> {
 
 
+
+    @Query("""
+        SELECT CASE WHEN EXISTS (
+            SELECT 1
+            FROM Message m Where m.listing.id = :listingId
+            AND (
+                (m.sender.id = :userId1 AND m.recipient.id = :userId2)
+                OR (m.sender.id = :userId2 AND m.recipient.id = :userId1)
+            )
+        ) THEN true ELSE false END 
+""")
+    boolean existsConversation(
+            @Param("userId1") UUID userId1,
+            @Param("userId2") UUID userId2,
+            @Param("listingId") UUID listingId
+    );
+
+
     @EntityGraph(attributePaths = {"sender", "recipient", "listing"})
     @Query("""
            SELECT m FROM Message m 
