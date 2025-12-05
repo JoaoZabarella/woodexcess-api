@@ -10,7 +10,6 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
@@ -27,48 +26,66 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
 
-        log.info("WebSocketAuthInterceptor: preSend called"); // Debug log
-
-        if (accessor != null) {
-            log.info("WebSocket Command: {}", accessor.getCommand()); // Debug log
-
-            if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-                String authHeader = accessor.getFirstNativeHeader("Authorization");
-                log.info("Authorization Header: {}", authHeader); // Debug log
-
-                if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                    String token = authHeader.substring(7);
-
-                    try {
-                        if (jwtProvider.validateJwtToken(token)) {
-                            String username = jwtProvider.getEmailFromToken(token);
-                            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-
-                            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                                    userDetails,
-                                    null,
-                                    userDetails.getAuthorities());
-
-                            accessor.setUser(authentication);
-
-                            SecurityContextHolder.getContext().setAuthentication(authentication);
-
-                            log.info("WebSocket authenticated successfully: user={}", username);
-                        } else {
-                            log.warn("Invalid JWT Token in WebSocket connection");
-                        }
-                    } catch (Exception e) {
-                        log.error("WebSocket authentication failed: {}", e.getMessage(), e);
-                    }
-                } else {
-                    log.warn("WebSocket connection without Authorization header");
-                }
-            }
-        } else {
+        if (accessor == null) {
             log.warn("StompHeaderAccessor is null");
+            return message;
+        }
+
+        StompCommand command = accessor.getCommand();
+        log.debug("WebSocket command: {}", command);
+
+        if (StompCommand.CONNECT.equals(command)) {
+            authenticateWebSocketConnection(accessor);
+        } else if (StompCommand.SEND.equals(command)) {
+            if (accessor.getUser() == null) {
+                log.error("CRITICAL: User is NULL on SEND command! Session: {}", accessor.getSessionId());
+            } else {
+                log.debug("SEND command - User: {}", accessor.getUser().getName());
+            }
         }
 
         return message;
     }
 
+    private void authenticateWebSocketConnection(StompHeaderAccessor accessor) {
+        String authHeader = accessor.getFirstNativeHeader("Authorization");
+
+        log.info("WebSocket CONNECT attempt - Session: {}", accessor.getSessionId());
+        log.debug("Authorization header present: {}", authHeader != null);
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            log.error("WebSocket CONNECT failed: Missing or invalid Authorization header");
+            return;
+        }
+
+        String token = authHeader.substring(7);
+        log.debug("Token length: {} characters", token.length());
+
+        try {
+            if (!jwtProvider.validateJwtToken(token)) {
+                log.error("WebSocket CONNECT failed: Invalid or expired JWT token");
+                return;
+            }
+
+            String username = jwtProvider.getEmailFromToken(token);
+            log.info("JWT token valid for user: {}", username);
+
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities()
+                    );
+
+            accessor.setUser(authentication);
+
+            log.info("WebSocket authenticated successfully: user={}, session={}",
+                    username, accessor.getSessionId());
+
+        } catch (Exception e) {
+            log.error("WebSocket authentication exception: {}", e.getMessage(), e);
+        }
+    }
 }
