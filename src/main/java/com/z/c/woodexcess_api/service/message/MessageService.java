@@ -4,16 +4,14 @@ import com.z.c.woodexcess_api.dto.message.ConversationResponse;
 import com.z.c.woodexcess_api.dto.message.MessageRequest;
 import com.z.c.woodexcess_api.dto.message.MessageResponse;
 import com.z.c.woodexcess_api.mapper.MessageMapper;
-import com.z.c.woodexcess_api.model.MaterialListing;
 import com.z.c.woodexcess_api.model.Message;
-import com.z.c.woodexcess_api.model.User;
-import com.z.c.woodexcess_api.repository.MaterialListingRepository;
 import com.z.c.woodexcess_api.repository.MessageRepository;
-import com.z.c.woodexcess_api.repository.UserRepository;
 import com.z.c.woodexcess_api.validator.MessageValidator;
+import com.z.c.woodexcess_api.validator.ValidatedMessageData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,37 +20,36 @@ import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.UUID;
 
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class MessageService {
 
     private final MessageRepository messageRepository;
-    private final UserRepository userRepository;
-    private final MaterialListingRepository listingRepository;
     private final MessageMapper messageMapper;
     private final MessageValidator validator;
-
 
     @Transactional
     public MessageResponse sendMessage(UUID senderId, MessageRequest request) {
         log.info("Sending message from user {} to user {} about listing {}",
                 senderId, request.recipientId(), request.listingId());
 
-        validator.validateMessageCreation(senderId, request.recipientId(), request.listingId());
 
-        User sender = userRepository.findById(senderId).orElseThrow();
-        User recipient = userRepository.findById(request.recipientId()).orElseThrow();
-        MaterialListing listing = listingRepository.findById(request.listingId()).orElseThrow();
+        ValidatedMessageData validated = validator.validateAndLoadMessageData(
+                senderId,
+                request.recipientId(),
+                request.listingId()
+        );
+
 
         Message message = Message.builder()
-                .sender(sender)
-                .recipient(recipient)
-                .listing(listing)
+                .sender(validated.sender())
+                .recipient(validated.recipient())
+                .listing(validated.listing())
                 .content(request.content().trim())
                 .isRead(false)
                 .build();
+
 
         Message savedMessage = messageRepository.save(message);
         log.info("Message {} saved successfully", savedMessage.getId());
@@ -60,24 +57,27 @@ public class MessageService {
         return messageMapper.toResponse(savedMessage);
     }
 
-
     @Transactional(readOnly = true)
-    public List<MessageResponse> getConversation(UUID currentUserId, UUID otherUserId, UUID listingId) throws AccessDeniedException {
+    public List<MessageResponse> getConversation(UUID currentUserId, UUID otherUserId, UUID listingId)
+            throws AccessDeniedException {
         log.info("Fetching conversation between {} and {} for listing {}",
                 currentUserId, otherUserId, listingId);
 
         validator.validateConversationAccess(currentUserId, otherUserId, listingId);
 
-        List<Message> messages = messageRepository.findConversationBetweenUsers(
-                currentUserId, otherUserId, listingId
+        Pageable pageable = PageRequest.of(0, 100);
+        Page<Message> messages = messageRepository.findConversationOptimized(
+                currentUserId,
+                otherUserId,
+                listingId,
+                pageable
         );
 
-        log.debug("Found {} messages in conversation", messages.size());
+        log.debug("Found {} messages in conversation", messages.getTotalElements());
         return messages.stream()
                 .map(messageMapper::toResponse)
                 .toList();
     }
-
 
     @Transactional(readOnly = true)
     public Page<MessageResponse> getMessagesByListing(UUID listingId, UUID userId, Pageable pageable) {
@@ -96,9 +96,9 @@ public class MessageService {
         return messagesPage.map(messageMapper::toResponse);
     }
 
-
     @Transactional
-    public void markConversationAsRead(UUID recipientId, UUID senderId, UUID listingId) throws AccessDeniedException {
+    public void markConversationAsRead(UUID recipientId, UUID senderId, UUID listingId)
+            throws AccessDeniedException {
         log.info("Marking messages as read: recipient={}, sender={}, listing={}",
                 recipientId, senderId, listingId);
 
@@ -107,7 +107,6 @@ public class MessageService {
         messageRepository.markMessagesAsRead(recipientId, senderId, listingId);
         log.debug("Messages marked as read successfully");
     }
-
 
     @Transactional(readOnly = true)
     public Long getUnreadCount(UUID userId) {
