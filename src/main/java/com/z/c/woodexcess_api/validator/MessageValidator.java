@@ -3,11 +3,13 @@ package com.z.c.woodexcess_api.validator;
 import com.z.c.woodexcess_api.exception.listing.ListingNotFoundException;
 import com.z.c.woodexcess_api.exception.users.UserNotFoundException;
 import com.z.c.woodexcess_api.repository.MaterialListingRepository;
+import com.z.c.woodexcess_api.repository.MessageRepository;
 import com.z.c.woodexcess_api.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.nio.file.AccessDeniedException;
 import java.util.UUID;
 
 @Component
@@ -17,6 +19,7 @@ public class MessageValidator {
 
     private final UserRepository userRepository;
     private final MaterialListingRepository listingRepository;
+    private final MessageRepository messageRepository;
 
     public void validateUserExists(UUID userId, String errorMessage){
         if (!userRepository.existsById(userId)) {
@@ -50,10 +53,25 @@ public class MessageValidator {
         validateDifferentUsers(senderId, recipientId);
     }
 
-    public void validateConversationAccess(UUID currentUserId, UUID otherUserId, UUID listingId) {
+    public void validateConversationAccess(UUID currentUserId, UUID otherUserId, UUID listingId) throws AccessDeniedException {
         validateUserExists(currentUserId,  "Current user not found with ID: " + currentUserId);
-        validateUserExists(otherUserId,   "Current user not found with ID: " + otherUserId);
+        validateUserExists(otherUserId,   "Other user not found with ID: " + otherUserId);
         validateListingExists(listingId);
+
+        if(currentUserId.equals(otherUserId)){
+            log.warn("User {} attempted to access conversation with themselves", currentUserId);
+            throw new IllegalArgumentException("Cannot access conversation with yourself");
+        }
+
+        boolean conversationExists = messageRepository.existsConversation(currentUserId, otherUserId, listingId);
+
+        if(!conversationExists){
+            log.warn("User {} attempted to access non-existent conversation with user {} for listin {} ", currentUserId, otherUserId, listingId);
+            throw new AccessDeniedException(
+                    "You don't have permission to access this conversation"
+            );
+        }
+        log.debug("Conversation access validated for user {} with user {} on listing {}", currentUserId, otherUserId, listingId);
     }
 
 
