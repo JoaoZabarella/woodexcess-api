@@ -2,6 +2,7 @@ package com.z.c.woodexcess_api.security;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -18,6 +19,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -26,45 +32,94 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final LoginRateLimitFilter loginRateLimitFilter;
     private final UserDetailsService userDetailsService;
+
+    @Value("${websocket.allowed-origins}")
+    private String[] allowedOrigins;
+
+    @Value("${spring.profiles.active:dev}")
+    private String activeProfile;
+
+    private static final String[] SWAGGER_WHITELIST = {
+            "/v3/api-docs/**",
+            "/swagger-ui/**",
+            "/swagger-ui.html"
+    };
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth -> auth
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .authenticationProvider(authenticationProvider())
+                .authorizeHttpRequests(auth -> {
 
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/users/register").permitAll()
+                    if ("dev".equals(activeProfile) || "staging".equals(activeProfile)) {
+                        auth.requestMatchers(SWAGGER_WHITELIST).permitAll();
+                    }
+
+                    auth
+                            // Auth endpoints
+                            .requestMatchers("/api/auth/**").permitAll()
+                            .requestMatchers("/api/users/register").permitAll()
+
+                            // WebSocket
+                            .requestMatchers("/ws/**").permitAll()
+
+                            // Static resources
+                            .requestMatchers(
+                                    "/websocket-chat-v2.html",
+                                    "/static/**",
+                                    "/public/**",
+                                    "/chat.html",
+                                    "/index.html",
+                                    "/favicon.ico",
+                                    "/robots.txt",
+                                    "/*.css",
+                                    "/*.js"
+                            ).permitAll()
+
+                            // Public listings (marketplace)
+                            .requestMatchers(HttpMethod.GET, "/api/listings/**").permitAll()
 
 
-                        .requestMatchers("/ws/**").permitAll()
-
-
-                        .requestMatchers("/*.html").permitAll()
-                        .requestMatchers("/*.css").permitAll()
-                        .requestMatchers("/*.js").permitAll()
-                        .requestMatchers("/static/**").permitAll()
-
-
-                        .requestMatchers(HttpMethod.GET, "/api/listings/**").permitAll()
-
-
-                        .anyRequest().authenticated()
-                )
+                            .anyRequest().authenticated();
+                })
+                .addFilterBefore(loginRateLimitFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                             response.setContentType("application/json");
-                            response.getWriter().write("{\"error\":\"Unauthorized\",\"message\":\"Authentication required\"}");
+                            response.getWriter().write("""
+                                    {
+                                        "error": "Unauthorized",
+                                        "message": "Authentication required",
+                                        "path": "%s"
+                                    }
+                                    """.formatted(request.getRequestURI()));
                         })
                 )
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 );
 
         return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of(allowedOrigins));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(false);
+        config.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 
     @Bean
@@ -79,9 +134,9 @@ public class SecurityConfig {
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder());
-        return authProvider;
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(userDetailsService);
+        provider.setPasswordEncoder(passwordEncoder());
+        return provider;
     }
 }
