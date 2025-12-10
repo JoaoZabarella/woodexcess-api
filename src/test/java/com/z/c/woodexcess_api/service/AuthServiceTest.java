@@ -67,11 +67,10 @@ class AuthServiceTest {
                 .password(ENCODED_PASSWORD)
                 .name("Test User")
                 .role(UserRole.USER)
-                .active(true)
+                .isActive(true)
                 .build();
     }
 
-    // ========== TESTES DE authenticate() ==========
 
     @Test
     @DisplayName("Should authenticate successfully with valid credentials")
@@ -136,7 +135,7 @@ class AuthServiceTest {
     @DisplayName("Should throw BadCredentialsException when user is inactive")
     void shouldThrowExceptionWhenUserIsInactive() {
         // Given
-        activeUser.setActive(false);
+        activeUser.setIsActive(false);
         when(userRepository.findByEmail(VALID_EMAIL)).thenReturn(Optional.of(activeUser));
         when(passwordEncoder.matches(VALID_PASSWORD, ENCODED_PASSWORD)).thenReturn(true);
 

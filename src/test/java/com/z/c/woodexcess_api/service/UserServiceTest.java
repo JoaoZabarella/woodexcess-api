@@ -75,7 +75,7 @@ class UserServiceTest {
                 .name("Test User")
                 .phone("123456789")
                 .role(UserRole.USER)
-                .active(true)
+                .isActive(true)
                 .build();
 
         List<AddressRequest> addresses = new ArrayList<>();
@@ -348,7 +348,7 @@ class UserServiceTest {
 
         userService.deactivateUser(USER_ID);
 
-        assertThat(user.getActive()).isFalse();
+        assertThat(user.getIsActive()).isFalse();
 
         verify(repository).findById(USER_ID);
         verify(repository).save(user);
