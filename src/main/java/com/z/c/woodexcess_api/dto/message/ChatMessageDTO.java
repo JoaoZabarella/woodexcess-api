@@ -20,8 +20,8 @@ public record ChatMessageDTO(
         @NotNull(message = "Listing ID is required")
         UUID listingId,
 
-        @NotBlank(message = "Message cotent cannot be empty")
-        @Size(max = 2000, message = "Message cannot exced 2000 characters")
+        @NotBlank(message = "Message content cannot be empty")
+        @Size(max = 2000, message = "Message cannot exceed 2000 characters")
         String content,
 
         UUID senderId,
