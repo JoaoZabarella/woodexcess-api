@@ -479,4 +479,42 @@ class MessageControllerIntegrationTest {
                 .build();
         return messageRepository.save(message);
     }
+
+    @Test
+    @Order(16)
+    @DisplayName("POST /api/messages - Should apply rate limit after 20 messages")
+    void sendMessage_RateLimitExceeded() throws Exception {
+        for (int i = 0; i < 20; i++) {
+            MessageRequest request = MessageRequest.builder()
+                    .recipientId(recipientId)
+                    .listingId(listingId)
+                    .content("Rate limit test " + i)
+                    .build();
+
+            mockMvc.perform(post("/api/messages")
+                            .header("Authorization", senderToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isCreated());
+        }
+
+
+        MessageRequest request = MessageRequest.builder()
+                .recipientId(recipientId)
+                .listingId(listingId)
+                .content("This should be rate limited")
+                .build();
+
+        // Assert
+        mockMvc.perform(post("/api/messages")
+                        .header("Authorization", senderToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andDo(print())
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.status").value(429))
+                .andExpect(jsonPath("$.message")
+                        .value("Too many messages sent. Please wait before sending more messages."));
+    }
+
 }
