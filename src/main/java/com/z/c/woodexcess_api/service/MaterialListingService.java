@@ -48,7 +48,7 @@ public class MaterialListingService {
     public ListingResponse createListing(CreateListingRequest request, User currentUser) {
         log.info("Creating listing for user: {}", currentUser.getEmail());
 
-        if (!currentUser.getActive()) {
+        if (!currentUser.getIsActive()) {
             throw new BusinessException("Cannot create listing: user account is inactive");
         }
 
@@ -67,7 +67,7 @@ public class MaterialListingService {
         }
 
         if (address == null) {
-            address = addressRepository.findByUserAndActiveAndIsPrimary(currentUser, true, true)
+            address = addressRepository.findByUserAndIsActiveAndIsPrimary(currentUser, true, true)
                     .orElseThrow(() -> new BusinessException(
                             "User must have at least one active address to create a listing"));
         }

@@ -48,7 +48,7 @@ public class AuthService {
             throw new BadCredentialsException("Invalid credentials");
         }
 
-        if (!user.getActive()) {
+        if (!user.getIsActive()) {
             log.warn("Authentication failed: inactive account for user: {}", email);
             throw new BadCredentialsException("Invalid credentials");
         }
