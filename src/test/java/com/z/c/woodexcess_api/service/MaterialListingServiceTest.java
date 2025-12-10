@@ -73,7 +73,7 @@ class MaterialListingServiceTest {
                                 .name("John Doe")
                                 .email("john@example.com")
                                 .role(UserRole.USER)
-                                .active(true)
+                                .isActive(true)
                                 .build();
 
                 inactiveUser = User.builder()
@@ -81,7 +81,7 @@ class MaterialListingServiceTest {
                                 .name("Inactive User")
                                 .email("inactive@example.com")
                                 .role(UserRole.USER)
-                                .active(false)
+                                .isActive(false)
                                 .build();
 
                 adminUser = User.builder()
@@ -89,7 +89,7 @@ class MaterialListingServiceTest {
                                 .name("Admin User")
                                 .email("admin@example.com")
                                 .role(UserRole.ADMIN)
-                                .active(true)
+                                .isActive(true)
                                 .build();
 
                 address = Address.builder()
@@ -101,7 +101,7 @@ class MaterialListingServiceTest {
                                 .state("SP")
                                 .zipCode("01310-100")
                                 .country("Brasil")
-                                .active(true)
+                                .isActive(true)
                                 .isPrimary(true)
                                 .build();
 
@@ -203,7 +203,7 @@ class MaterialListingServiceTest {
                                 .name("Another User")
                                 .email("another@example.com")
                                 .role(UserRole.USER)
-                                .active(true)
+                                .isActive(true)
                                 .build();
 
                 Address anotherAddress = Address.builder()
@@ -215,7 +215,7 @@ class MaterialListingServiceTest {
                                 .state("RJ")
                                 .zipCode("20000-000")
                                 .country("Brasil")
-                                .active(true)
+                                .isActive(true)
                                 .isPrimary(true)
                                 .build();
 
@@ -250,7 +250,7 @@ class MaterialListingServiceTest {
                                 Condition.USED,
                                 null);
 
-                when(addressRepository.findByUserAndActiveAndIsPrimary(activeUser, true, true))
+                when(addressRepository.findByUserAndIsActiveAndIsPrimary(activeUser, true, true))
                                 .thenReturn(Optional.of(address));
                 when(mapper.toEntity(requestWithoutAddress, activeUser, address)).thenReturn(listing);
                 when(listingRepository.save(listing)).thenReturn(listing);
@@ -259,7 +259,7 @@ class MaterialListingServiceTest {
                 ListingResponse result = service.createListing(requestWithoutAddress, activeUser);
 
                 assertThat(result).isNotNull();
-                verify(addressRepository).findByUserAndActiveAndIsPrimary(activeUser, true, true);
+                verify(addressRepository).findByUserAndIsActiveAndIsPrimary(activeUser, true, true);
                 verify(listingRepository).save(listing);
         }
 
@@ -301,7 +301,7 @@ class MaterialListingServiceTest {
                                 .name("Another User")
                                 .email("another@example.com")
                                 .role(UserRole.USER)
-                                .active(true)
+                                .isActive(true)
                                 .build();
 
                 when(listingRepository.findById(listing.getId())).thenReturn(Optional.of(listing));
@@ -348,7 +348,7 @@ class MaterialListingServiceTest {
                                 .name("Another User")
                                 .email("another@example.com")
                                 .role(UserRole.USER)
-                                .active(true)
+                                .isActive(true)
                                 .build();
 
                 when(listingRepository.findById(listing.getId())).thenReturn(Optional.of(listing));
