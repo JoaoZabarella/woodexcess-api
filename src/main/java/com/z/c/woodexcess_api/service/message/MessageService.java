@@ -3,9 +3,12 @@ package com.z.c.woodexcess_api.service.message;
 import com.z.c.woodexcess_api.dto.message.ConversationResponse;
 import com.z.c.woodexcess_api.dto.message.MessageRequest;
 import com.z.c.woodexcess_api.dto.message.MessageResponse;
+import com.z.c.woodexcess_api.exception.ResourceNotFoundException;
 import com.z.c.woodexcess_api.mapper.MessageMapper;
 import com.z.c.woodexcess_api.model.Message;
+import com.z.c.woodexcess_api.model.User;
 import com.z.c.woodexcess_api.repository.MessageRepository;
+import com.z.c.woodexcess_api.repository.UserRepository;
 import com.z.c.woodexcess_api.validator.MessageValidator;
 import com.z.c.woodexcess_api.validator.ValidatedMessageData;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +31,7 @@ public class MessageService {
     private final MessageRepository messageRepository;
     private final MessageMapper messageMapper;
     private final MessageValidator validator;
+    private final UserRepository userRepository;
 
     @Transactional
     public MessageResponse sendMessage(UUID senderId, MessageRequest request) {
@@ -142,4 +146,11 @@ public class MessageService {
                 })
                 .toList();
     }
+
+    public String getUserEmailById(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return user.getEmail();
+    }
+
 }
