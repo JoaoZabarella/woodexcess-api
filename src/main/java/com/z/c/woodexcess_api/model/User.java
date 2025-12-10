@@ -9,57 +9,106 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-@Getter
-@NoArgsConstructor
-@AllArgsConstructor
-@Entity(name = "user")
+@Entity
 @Table(name = "users")
+@Getter
 @Setter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
+    @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(unique = true, nullable = false)
+    @Column(name = "email", unique = true, nullable = false)
     private String email;
 
     @Column(name = "password_hash", nullable = false)
     private String password;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private UserRole role;
-
-    @Column(length = 20)
+    @Column(name = "phone", length = 20)
     private String phone;
 
-    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false)
     @Builder.Default
-    private Boolean active = true;
+    private UserRole role = UserRole.USER;
+
+    @Column(name = "is_active", nullable = false)
+    @Builder.Default
+    private Boolean isActive = true;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
     private List<Address> addresses = new ArrayList<>();
 
-    @Builder.Default
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     @PrePersist
-    public void prePersist() {
-        if (createdAt == null)
+    protected void onCreate() {
+        if (createdAt == null) {
             createdAt = LocalDateTime.now();
-        if (updatedAt == null)
+        }
+        if (updatedAt == null) {
             updatedAt = LocalDateTime.now();
+        }
+        if (isActive == null) {
+            isActive = true;
+        }
+        if (role == null) {
+            role = UserRole.USER;
+        }
     }
 
     @PreUpdate
-    public void preUpdate() {
-        this.updatedAt = LocalDateTime.now();
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 
+
+    @Transient
+    public boolean isActive() {
+        return Boolean.TRUE.equals(this.isActive);
+    }
+
+    public void activate() {
+        this.isActive = true;
+    }
+
+    public void deactivate() {
+        this.isActive = false;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof User)) return false;
+        User user = (User) o;
+        return id != null && id.equals(user.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", email='" + email + '\'' +
+                ", role=" + role +
+                ", isActive=" + isActive +
+                '}';
+    }
 }
