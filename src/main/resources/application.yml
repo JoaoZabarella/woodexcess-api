@@ -82,3 +82,15 @@ logging:
 # WebSocket
 websocket:
   allowed-origins: ${WEBSOCKET_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
+
+
+rate-limit:
+  # Login rate limit
+  capacity: 5
+  refill-tokens: 5
+  refill-minutes: 1
+
+  # Message rate limit
+  message-capacity: 20
+  message-refill-tokens: 20
+  message-refill-minutes: 1
