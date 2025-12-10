@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
@@ -28,7 +29,6 @@ import java.util.List;
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
-
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentials(
@@ -43,7 +43,6 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
     }
-
 
     @ExceptionHandler(PasswordIncorrectException.class)
     public ResponseEntity<ErrorResponse> handlePasswordIncorrect(
@@ -73,7 +72,6 @@ public class GlobalExceptionHandler {
         );
     }
 
-
     @ExceptionHandler(TokenReuseDetectedException.class)
     public ResponseEntity<ErrorResponse> handleTokenReuseDetected(
             TokenReuseDetectedException ex,
@@ -88,6 +86,30 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
     }
+
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handleMissingServletRequestParameter(
+            MissingServletRequestParameterException ex,
+            HttpServletRequest request) {
+
+        String parameterName = ex.getParameterName();
+        String parameterType = ex.getParameterType();
+
+        log.warn("Missing required request parameter '{}' of type {} on path: {}",
+                parameterName, parameterType, request.getRequestURI());
+
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+                .message(String.format("Required parameter '%s' is not present", parameterName))
+                .path(request.getRequestURI())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationExceptions(
@@ -132,7 +154,6 @@ public class GlobalExceptionHandler {
         );
     }
 
-
     @ExceptionHandler(InvalidImageFormatException.class)
     public ResponseEntity<ErrorResponse> handleInvalidImageFormat(
             InvalidImageFormatException ex,
@@ -146,7 +167,6 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
     }
-
 
     @ExceptionHandler(MaxImagesExceededException.class)
     public ResponseEntity<ErrorResponse> handleMaxImagesExceeded(
@@ -176,7 +196,6 @@ public class GlobalExceptionHandler {
         );
     }
 
-
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleEntityNotFound(
             EntityNotFoundException ex,
@@ -190,7 +209,6 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
     }
-
 
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleUserNotFound(
@@ -220,7 +238,6 @@ public class GlobalExceptionHandler {
         );
     }
 
-
     @ExceptionHandler(ListingNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleListingNotFound(
             ListingNotFoundException ex,
@@ -249,7 +266,6 @@ public class GlobalExceptionHandler {
         );
     }
 
-
     @ExceptionHandler(EmailAlreadyExistException.class)
     public ResponseEntity<ErrorResponse> handleEmailAlreadyExists(
             EmailAlreadyExistException ex,
@@ -264,7 +280,6 @@ public class GlobalExceptionHandler {
         );
     }
 
-
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceeded(
             MaxUploadSizeExceededException ex,
@@ -278,7 +293,6 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
     }
-
 
     @ExceptionHandler(ImageUploadException.class)
     public ResponseEntity<ErrorResponse> handleImageUploadException(
@@ -307,7 +321,6 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
     }
-
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(
