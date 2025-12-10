@@ -1,5 +1,6 @@
 package com.z.c.woodexcess_api.dto.message;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -26,7 +27,8 @@ public record ChatMessageDTO(
         UUID senderId,
         String senderName,
         String listingTitle,
-        LocalDateTime timesTamp
+        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+        LocalDateTime timestamp
 
 ) {
 

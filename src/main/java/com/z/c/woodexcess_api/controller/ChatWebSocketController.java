@@ -111,8 +111,10 @@ public class ChatWebSocketController {
             log.debug("Typing notification from {} to {} (listing={})",
                     senderId, typing.recipientId(), typing.listingId());
 
+            String recipientEmail = messageService.getUserEmailById(typing.recipientId());
+
             messagingTemplate.convertAndSendToUser(
-                    typing.recipientId().toString(),
+                    recipientEmail,
                     "/queue/typing",
                     new TypingNotification(senderId, typing.listingId())
             );

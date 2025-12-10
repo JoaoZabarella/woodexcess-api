@@ -35,10 +35,14 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
         log.debug("WebSocket command: {}", command);
 
         if (StompCommand.CONNECT.equals(command)) {
-            authenticateWebSocketConnection(accessor);
+            if (!authenticateWebSocketConnection(accessor)) {
+                log.error("WebSocket CONNECT rejected: Authentication failed");
+                return null;
+            }
         } else if (StompCommand.SEND.equals(command)) {
             if (accessor.getUser() == null) {
                 log.error("CRITICAL: User is NULL on SEND command! Session: {}", accessor.getSessionId());
+                return null;
             } else {
                 log.debug("SEND command - User: {}", accessor.getUser().getName());
             }
@@ -47,7 +51,7 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
         return message;
     }
 
-    private void authenticateWebSocketConnection(StompHeaderAccessor accessor) {
+    private boolean authenticateWebSocketConnection(StompHeaderAccessor accessor) {
         String authHeader = accessor.getFirstNativeHeader("Authorization");
 
         log.info("WebSocket CONNECT attempt - Session: {}", accessor.getSessionId());
@@ -55,7 +59,7 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             log.error("WebSocket CONNECT failed: Missing or invalid Authorization header");
-            return;
+            return false;
         }
 
         String token = authHeader.substring(7);
@@ -64,7 +68,7 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
         try {
             if (!jwtProvider.validateJwtToken(token)) {
                 log.error("WebSocket CONNECT failed: Invalid or expired JWT token");
-                return;
+                return false;
             }
 
             String username = jwtProvider.getEmailFromToken(token);
@@ -84,8 +88,11 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
             log.info("WebSocket authenticated successfully: user={}, session={}",
                     username, accessor.getSessionId());
 
+            return true;
+
         } catch (Exception e) {
             log.error("WebSocket authentication exception: {}", e.getMessage(), e);
+            return false;
         }
     }
 }
