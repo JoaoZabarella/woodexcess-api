@@ -30,7 +30,7 @@ public class UserMapper {
                 .phone(dto.phone())
                 .password(passwordEncoder.encode(dto.password()))
                 .role(UserRole.USER)
-                .active(true)
+                .isActive(true)
                 .build();
 
         if (dto.addresses() != null && !dto.addresses().isEmpty()) {
@@ -51,7 +51,7 @@ public class UserMapper {
                 user.getName(),
                 user.getEmail(),
                 user.getPhone(),
-                user.getActive(),
+                user.getIsActive(),
                 user.getRole()
         );
     }
@@ -68,7 +68,7 @@ public class UserMapper {
                 user.getName(),
                 user.getEmail(),
                 user.getPhone(),
-                user.getActive(),
+                user.getIsActive(),
                 user.getRole(),
                 addressResponses
         );

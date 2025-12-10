@@ -23,7 +23,7 @@ public class AddressMapper {
                 .zipCode(formatZipCode(dto.zipCode()))
                 .country(dto.country() != null ? dto.country() : "Brasil")
                 .isPrimary(dto.isPrimary() != null ? dto.isPrimary() : false)
-                .active(true)
+                .isActive(true)
                 .build();
     }
 
@@ -39,7 +39,7 @@ public class AddressMapper {
                 .zipCode(viaCep.cep())
                 .country("Brasil")
                 .isPrimary(dto.isPrimary() != null ? dto.isPrimary() : false)
-                .active(true)
+                .isActive(true)
                 .build();
     }
 
@@ -55,7 +55,7 @@ public class AddressMapper {
                 .state(address.getState())
                 .zipCode(address.getFormatedZipCode())
                 .country(address.getCountry())
-                .active(address.getActive())
+                .active(address.getIsActive())
                 .isPrimary(address.getIsPrimary())
                 .createdAt(address.getCreatedAt())
                 .updatedAt(address.getUpdatedAt())
