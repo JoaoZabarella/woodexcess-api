@@ -14,4 +14,8 @@ public class RateLimitProperties {
     private int capacity = 5;
     private int refillTokens = 5;
     private int refillMinutes = 15;
+
+    private int messageCapacity = 20;
+    private int messageRefillTokens = 20;
+    private int messageRefillMinutes = 1;
 }
