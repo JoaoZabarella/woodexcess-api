@@ -109,7 +109,7 @@ public class AuthControllerIntegrationTest {
                 .andExpect(status().isCreated());
 
         userRepository.findByEmail(uniqueEmail).ifPresent(user -> {
-            user.setActive(false);
+            user.setIsActive(false);
             userRepository.save(user);
         });
 
