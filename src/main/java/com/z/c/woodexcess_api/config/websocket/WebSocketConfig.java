@@ -1,4 +1,4 @@
-package com.z.c.woodexcess_api.config;
+package com.z.c.woodexcess_api.config.websocket;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,9 +16,12 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @Slf4j
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
+    private final WebSocketRateLimitInterceptor webSocketRateLimitInterceptor;
     private final WebSocketAuthInterceptor webSocketAuthInterceptor;
     @Value("${websocket.allowed-origins}")
     private String[] allowedOrigins;
+
+
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
@@ -38,7 +41,11 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
-        registration.interceptors(webSocketAuthInterceptor);
-        log.info("WebSocket authentication interceptor registered");
+        registration.interceptors(
+                webSocketAuthInterceptor,
+                webSocketRateLimitInterceptor
+
+        );
+        log.info("WebSocket interceptors registered: rate limit + authentication");
     }
 }

@@ -1,4 +1,4 @@
-package com.z.c.woodexcess_api.config;
+package com.z.c.woodexcess_api.config.websocket;
 
 import com.z.c.woodexcess_api.security.JwtProvider;
 import lombok.RequiredArgsConstructor;
