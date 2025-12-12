@@ -196,13 +196,17 @@ class ChatWebSocketIntegrationTest {
                 new StompSessionHandlerAdapter() {
                     @Override
                     public void afterConnected(StompSession session, StompHeaders connectedHeaders) {
-                        connectionStatus.offer("CONNECTED");
+                        if (!connectionStatus.offer("CONNECTED")) {
+                            throw new IllegalStateException("Failed to add connection status to queue");
+                        }
                     }
 
                     @Override
                     public void handleException(StompSession session, StompCommand command,
                                                 StompHeaders headers, byte[] payload, Throwable exception) {
-                        connectionStatus.offer("ERROR");
+                        if (!connectionStatus.offer("ERROR")) {
+                            throw new IllegalStateException("Failed to add error status to queue");
+                        }
                     }
                 }
         ).get(CONNECTION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
@@ -229,12 +233,16 @@ class ChatWebSocketIntegrationTest {
                     new StompSessionHandlerAdapter() {
                         @Override
                         public void afterConnected(StompSession session, StompHeaders connectedHeaders) {
-                            connectionStatus.offer("CONNECTED");
+                            if (!connectionStatus.offer("CONNECTED")) {
+                                throw new IllegalStateException("Failed to add connection status to queue");
+                            }
                         }
 
                         @Override
                         public void handleTransportError(StompSession session, Throwable exception) {
-                            connectionStatus.offer("TRANSPORT_ERROR");
+                            if (!connectionStatus.offer("TRANSPORT_ERROR")) {
+                                throw new IllegalStateException("Failed to add error status to queue");
+                            }
                         }
                     }
             ).get(CONNECTION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
@@ -273,7 +281,9 @@ class ChatWebSocketIntegrationTest {
 
             @Override
             public void handleFrame(StompHeaders headers, Object payload) {
-                receivedMessages.offer((ChatMessageDTO) payload);
+                if (!receivedMessages.offer((ChatMessageDTO) payload)) {
+                    throw new IllegalStateException("Failed to add message to queue");
+                }
             }
         });
 
@@ -292,7 +302,9 @@ class ChatWebSocketIntegrationTest {
 
             @Override
             public void handleFrame(StompHeaders headers, Object payload) {
-                receivedMessages.offer((ChatMessageDTO) payload);
+                if (!receivedMessages.offer((ChatMessageDTO) payload)) {
+                    throw new IllegalStateException("Failed to add message to queue");
+                }
             }
         });
 
@@ -351,7 +363,9 @@ class ChatWebSocketIntegrationTest {
 
             @Override
             public void handleFrame(StompHeaders headers, Object payload) {
-                receivedMessages.offer((ChatMessageDTO) payload);
+                if (!receivedMessages.offer((ChatMessageDTO) payload)) {
+                    throw new IllegalStateException("Failed to add message to queue");
+                }
             }
         });
 
@@ -414,7 +428,9 @@ class ChatWebSocketIntegrationTest {
 
             @Override
             public void handleFrame(StompHeaders headers, Object payload) {
-                receivedNotifications.offer(payload);
+                if (!receivedNotifications.offer(payload)) {
+                    throw new IllegalStateException("Failed to add notification to queue");
+                }
             }
         });
 
