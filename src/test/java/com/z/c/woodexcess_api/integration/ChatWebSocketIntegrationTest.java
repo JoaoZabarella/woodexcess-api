@@ -2,6 +2,7 @@ package com.z.c.woodexcess_api.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.z.c.woodexcess_api.config.websocket.WebSocketRateLimitInterceptor;
 import com.z.c.woodexcess_api.dto.message.ChatMessageDTO;
 import com.z.c.woodexcess_api.enums.Condition;
 import com.z.c.woodexcess_api.enums.ListingStatus;
@@ -36,6 +37,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -73,6 +75,10 @@ class ChatWebSocketIntegrationTest {
     @Autowired
     private JwtProvider jwtProvider;
 
+
+    @Autowired
+    private WebSocketRateLimitInterceptor rateLimitInterceptor;
+
     private WebSocketStompClient stompClient;
     private String wsUrl;
     private String senderToken;
@@ -91,6 +97,9 @@ class ChatWebSocketIntegrationTest {
 
     @BeforeEach
     void setUp() {
+
+        rateLimitInterceptor.clearBuckets();
+
         messageRepository.deleteAll();
         listingRepository.deleteAll();
         addressRepository.deleteAll();
@@ -270,7 +279,8 @@ class ChatWebSocketIntegrationTest {
                 wsUrl,
                 recipientHeaders,
                 createStompHeaders(recipientToken),
-                new StompSessionHandlerAdapter() {}
+                new StompSessionHandlerAdapter() {
+                }
         ).get(CONNECTION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
         recipientSession.subscribe("/user/queue/messages", new StompFrameHandler() {
@@ -291,7 +301,8 @@ class ChatWebSocketIntegrationTest {
                 wsUrl,
                 senderHeaders,
                 createStompHeaders(senderToken),
-                new StompSessionHandlerAdapter() {}
+                new StompSessionHandlerAdapter() {
+                }
         ).get(CONNECTION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
         senderSession.subscribe("/user/queue/messages", new StompFrameHandler() {
@@ -352,7 +363,8 @@ class ChatWebSocketIntegrationTest {
                 wsUrl,
                 headers,
                 createStompHeaders(senderToken),
-                new StompSessionHandlerAdapter() {}
+                new StompSessionHandlerAdapter() {
+                }
         ).get(CONNECTION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
         session.subscribe("/user/queue/messages", new StompFrameHandler() {
@@ -417,7 +429,8 @@ class ChatWebSocketIntegrationTest {
                 wsUrl,
                 recipientHeaders,
                 createStompHeaders(recipientToken),
-                new StompSessionHandlerAdapter() {}
+                new StompSessionHandlerAdapter() {
+                }
         ).get(CONNECTION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
         recipientSession.subscribe("/user/queue/typing", new StompFrameHandler() {
@@ -438,7 +451,8 @@ class ChatWebSocketIntegrationTest {
                 wsUrl,
                 senderHeaders,
                 createStompHeaders(senderToken),
-                new StompSessionHandlerAdapter() {}
+                new StompSessionHandlerAdapter() {
+                }
         ).get(CONNECTION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
         Thread.sleep(SUBSCRIPTION_SETUP_MILLIS);
@@ -474,7 +488,8 @@ class ChatWebSocketIntegrationTest {
                 wsUrl,
                 headers,
                 createStompHeaders(senderToken),
-                new StompSessionHandlerAdapter() {}
+                new StompSessionHandlerAdapter() {
+                }
         ).get(CONNECTION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
         assertThat(session.isConnected()).isTrue();
@@ -483,5 +498,77 @@ class ChatWebSocketIntegrationTest {
         Thread.sleep(DISCONNECT_WAIT_MILLIS);
 
         assertThat(session.isConnected()).isFalse();
+    }
+
+    @Test
+    @Order(7)
+    @DisplayName("Should block WebSocket messages after rate limit exceeded")
+    void testWebSocketRateLimit() throws Exception {
+
+        rateLimitInterceptor.clearBuckets();
+        messageRepository.deleteAll();
+
+        WebSocketHttpHeaders headers = new WebSocketHttpHeaders();
+        headers.add("Authorization", "Bearer " + senderToken);
+
+        StompSession session = stompClient.connectAsync(
+                wsUrl,
+                headers,
+                createStompHeaders(senderToken),
+                new StompSessionHandlerAdapter() {}
+        ).get(CONNECTION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+
+        BlockingQueue<ChatMessageDTO> receivedMessages = new LinkedBlockingQueue<>();
+
+        session.subscribe("/user/queue/messages", new StompFrameHandler() {
+            @Override
+            public Type getPayloadType(StompHeaders headers) {
+                return ChatMessageDTO.class;
+            }
+
+            @Override
+            public void handleFrame(StompHeaders headers, Object payload) {
+                receivedMessages.offer((ChatMessageDTO) payload);
+            }
+        });
+
+        Thread.sleep(SUBSCRIPTION_SETUP_MILLIS);
+
+
+        for (int i = 0; i < 30; i++) {
+            ChatMessageDTO message = ChatMessageDTO.builder()
+                    .senderId(senderId)
+                    .recipientId(recipientId)
+                    .listingId(listingId)
+                    .content("Rate limit test " + i)
+                    .timestamp(LocalDateTime.now())
+                    .build();
+
+            session.send("/app/chat.send", message);
+            Thread.sleep(50);
+        }
+
+        Thread.sleep(3000);
+
+        long savedMessagesAfter30 = messageRepository.count();
+        assertThat(savedMessagesAfter30).isEqualTo(30L);
+
+
+        ChatMessageDTO blockedMessage = ChatMessageDTO.builder()
+                .senderId(senderId)
+                .recipientId(recipientId)
+                .listingId(listingId)
+                .content("This should be rate limited")
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        session.send("/app/chat.send", blockedMessage);
+        Thread.sleep(2000);
+
+
+        long finalSavedMessages = messageRepository.count();
+        assertThat(finalSavedMessages).isEqualTo(30L);
+
+        session.disconnect();
     }
 }

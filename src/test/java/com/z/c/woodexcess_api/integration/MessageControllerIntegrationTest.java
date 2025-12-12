@@ -482,12 +482,12 @@ class MessageControllerIntegrationTest {
 
     @Test
     @Order(16)
-    @DisplayName("POST /api/messages - Should apply rate limit after 20 messages")
+    @DisplayName("POST /api/messages - Should apply rate limit after 15 messages")
     void sendMessage_RateLimitExceeded() throws Exception {
 
         User rateLimitSender = User.builder()
                 .name("Rate Limit Tester")
-                .email("ratelimit-" + UUID.randomUUID() + "@test.com")
+                .email("rate limit-" + UUID.randomUUID() + "@test.com")
                 .phone("11999999999")
                 .password(passwordEncoder.encode("password123"))
                 .role(UserRole.USER)
@@ -500,7 +500,7 @@ class MessageControllerIntegrationTest {
         String rateLimitToken = "Bearer " + jwtProvider.generateJwtToken(rateLimitSender);
 
 
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 15; i++) {
             MessageRequest request = MessageRequest.builder()
                     .recipientId(recipientId)
                     .listingId(listingId)
@@ -527,9 +527,7 @@ class MessageControllerIntegrationTest {
                         .content(objectMapper.writeValueAsString(blockedRequest)))
                 .andDo(print())
                 .andExpect(status().isTooManyRequests())
-                .andExpect(jsonPath("$.status").value(429))
-                .andExpect(jsonPath("$.message")
-                        .value("Too many messages sent. Please wait before sending more messages."));
+                .andExpect(jsonPath("$.error")
+                        .value("Too many messages. Please try again later."));
     }
-
 }
