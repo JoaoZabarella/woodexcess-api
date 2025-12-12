@@ -43,12 +43,12 @@ refresh:
     max-devices: 5
 
 aws:
+  access-key-id: test-access-key-id
+  secret-access-key: test-secret-access-key
   s3:
     bucket-name: test-bucket
     region: us-east-1
-  credentials:
-    access-key: test-access-key
-    secret-key: test-secret-key
+    cdn-url: ""
 
 app:
   rate-limit:
