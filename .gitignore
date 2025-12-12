@@ -66,3 +66,4 @@ flyway.conf
 # Sensitive configuration
 application*.yml
 !application-example.yml
+!src/test/resources/application-test.yml
