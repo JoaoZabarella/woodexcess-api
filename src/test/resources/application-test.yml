@@ -1,97 +1,56 @@
-# ==============================================================================
-# WOODEXCESS API - Test Environment (Testcontainers PostgreSQL)
-# ==============================================================================
-
 spring:
+  application:
+    name: woodexcess-api
+
   datasource:
-    url: jdbc:tc:postgresql:16-alpine:///testdb
-    username: test
-    password: test
+    url: jdbc:tc:postgresql:16-alpine:///test?TC_DAEMON=true
     driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
 
-  # JPA
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: validate
-    show-sql: false
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
+    show-sql: false
 
-  # Flyway
   flyway:
     enabled: true
-    baseline-on-migrate: true
     locations: classpath:db/migration
+    baseline-on-migrate: true
 
-  # Spring Cloud
-  cloud:
-    compatibility-verifier:
-      enabled: false
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
+    org.springframework.security: DEBUG
+    org.springframework.messaging: DEBUG
+    org.springframework.web.socket: DEBUG
+    com.z.c.woodexcess_api: DEBUG
 
-  # Cache
-  cache:
-    type: simple
-
-# JWT Test
 jwt:
-  secret: ${JWT_SECRET:d428cb12c786f4fed33f674b12fb9efa4a02aecc293681dcaeec923dd7a1be48f3e9a7e061648382b2be8826436f8773bc174730b354fdf6c59d4bb330398a49}
-  access-expiration-ms: 900000
-  refresh-expiration-ms: 604800000
+  secret: test-secret-key-for-testing-purposes-only-must-be-at-least-512-bits-long-for-hs512-algorithm
+  expiration: 3600000
 
-# Security - Refresh Token
-security:
-  refresh-token:
+refresh:
+  token:
+    expiration: 2592000000
     max-devices: 5
-    rotation-enabled: true
-    validate-context: true
-    reuse-detection: true
-
 
 app:
   rate-limit:
+    login:
+      capacity: 5
+      refill-tokens: 5
+      refill-minutes: 1
 
-    login-attempts: 999999
-    login-minutes: 1
+    message:
+      capacity: 15
+      refill-tokens: 15
+      refill-minutes: 1
 
-
-    message-capacity: 20
-    message-refill-tokens: 20
-    message-refill-minutes: 1
-
-# Logging
-logging:
-  level:
-    org.hibernate.SQL: WARN
-    org.springframework: WARN
-    com.z.c.woodexcess_api: INFO
-    org.testcontainers: INFO
-    com.github.dockerjava: WARN
-    tc.postgres: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-
-# ViaCEP
-viacep:
-  url: https://viacep.com.br/ws
-
-
-#Cors para WebSocket
-websocket:
-  allowed-origins: http://localhost:3000,http://localhost:5173
-
-# Feign
-feign:
-  client:
-    config:
-      default:
-        connectTimeout: 5000
-        readTimeout: 5000
-
-# Mock AWS para testes
-aws:
-  s3:
-    bucket-name: test-bucket
-    region: us-east-1
-  access-key-id: test-key
-  secret-access-key: test-secret
+    websocket:
+      capacity: 30
+      refill-tokens: 5
+      refill-minutes: 1
