@@ -62,3 +62,7 @@ docker-compose.override.yml
 
 # Flyway configuration (contains sensitive credentials)
 flyway.conf
+
+# Sensitive configuration
+application*.yml
+!application-example.yml
