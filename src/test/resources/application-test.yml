@@ -42,6 +42,14 @@ refresh:
     expiration: 2592000000
     max-devices: 5
 
+aws:
+  s3:
+    bucket-name: test-bucket
+    region: us-east-1
+  credentials:
+    access-key: test-access-key
+    secret-key: test-secret-key
+
 app:
   rate-limit:
     login:
@@ -58,5 +66,7 @@ app:
       capacity: 30
       refill-tokens: 5
       refill-minutes: 1
+
+
 
 
