@@ -6,16 +6,36 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@ConfigurationProperties (prefix = "security.login.rate-limit")
+@ConfigurationProperties(prefix = "app.rate-limit")
 @Getter
 @Setter
 public class RateLimitProperties {
 
-    private int capacity = 5;
-    private int refillTokens = 5;
-    private int refillMinutes = 15;
+    private LoginRateLimit login = new LoginRateLimit();
+    private MessageRateLimit message = new MessageRateLimit();
+    private WebSocketRateLimit websocket = new WebSocketRateLimit();
 
-    private int messageCapacity = 20;
-    private int messageRefillTokens = 20;
-    private int messageRefillMinutes = 1;
+    @Getter
+    @Setter
+    public static class LoginRateLimit {
+        private int capacity;
+        private int refillTokens;
+        private int refillMinutes;
+    }
+
+    @Getter
+    @Setter
+    public static class MessageRateLimit {
+        private int capacity;
+        private int refillTokens;
+        private int refillMinutes;
+    }
+
+    @Getter
+    @Setter
+    public static class WebSocketRateLimit {
+        private int capacity;
+        private int refillTokens;
+        private int refillMinutes;
+    }
 }
