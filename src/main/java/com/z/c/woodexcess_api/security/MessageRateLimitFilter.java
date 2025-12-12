@@ -1,6 +1,5 @@
 package com.z.c.woodexcess_api.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.z.c.woodexcess_api.config.RateLimitProperties;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
@@ -9,11 +8,11 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -27,76 +26,68 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@Order(3)
 public class MessageRateLimitFilter extends OncePerRequestFilter {
 
     private final RateLimitProperties rateLimitProperties;
-    private final Map<String, Bucket> messageCache = new ConcurrentHashMap<>();
+
+
+    @Getter
+    private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
 
-        if (!request.getRequestURI().startsWith("/api/messages") || !"POST".equals(request.getMethod())) {
-            filterChain.doFilter(request, response);
-            return;
+        if (request.getRequestURI().startsWith("/api/messages") && "POST".equalsIgnoreCase(request.getMethod())) {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+            if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getPrincipal())) {
+                String userId = ((CustomUserDetails) authentication.getPrincipal()).getId().toString();
+                Bucket bucket = buckets.computeIfAbsent(userId, this::createBucket);
+
+                if (!bucket.tryConsume(1)) {
+                    log.warn("MESSAGE_RATE_LIMIT: Rate limit exceeded for user: {}", userId);
+                    response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+                    response.setContentType("application/json");
+
+                    response.getWriter().write("{\"error\":\"Too many messages. Please try again later.\"}");
+
+                    response.getWriter().flush();
+                    return;
+                }
+
+                log.debug("MESSAGE_RATE_LIMIT: Message allowed for user {} (remaining: {})",
+                        userId, bucket.getAvailableTokens());
+            }
         }
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication == null || !authentication.isAuthenticated()) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        String userEmail = authentication.getName();
-        Bucket bucket = resolveBucket(userEmail);
-
-        if (bucket.tryConsume(1)) {
-            log.debug("[MESSAGE_RATE_LIMIT] Message allowed for user: {}", userEmail);
-            filterChain.doFilter(request, response);
-        } else {
-            log.warn("[MESSAGE_RATE_LIMIT] Message blocked for user: {} - Too many messages", userEmail);
-
-            response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
-            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-
-            Map<String, Object> errorResponse = Map.of(
-                    "status", 429,
-                    "error", "Too Many Requests",
-                    "message", "Too many messages sent. Please wait before sending more messages.",
-                    "path", request.getRequestURI()
-            );
-
-            new ObjectMapper().writeValue(response.getWriter(), errorResponse);
-        }
+        filterChain.doFilter(request, response);
     }
 
-    private Bucket resolveBucket(String userEmail) {
-        return messageCache.computeIfAbsent(userEmail, k -> createNewBucket());
-    }
+    private Bucket createBucket(String userId) {
 
-    private Bucket createNewBucket() {
         Bandwidth limit = Bandwidth.classic(
-                rateLimitProperties.getMessageCapacity(),
-                Refill.intervally(
-                        rateLimitProperties.getMessageRefillTokens(),
-                        Duration.ofMinutes(rateLimitProperties.getMessageRefillMinutes())
+                rateLimitProperties.getMessage().getCapacity(),
+                Refill.greedy(
+                        rateLimitProperties.getMessage().getRefillTokens(),
+                        Duration.ofMinutes(rateLimitProperties.getMessage().getRefillMinutes())
                 )
         );
+        log.info("=== MESSAGE RATE LIMIT BUCKET CREATED ===");
+        log.info("User: {}", userId);
+        log.info("Capacity: {}", rateLimitProperties.getMessage().getCapacity());
+        log.info("Refill: {} tokens every {} minutes",
+                rateLimitProperties.getMessage().getRefillTokens(),
+                rateLimitProperties.getMessage().getRefillMinutes());
+        log.info("========================================");
         return Bucket.builder().addLimit(limit).build();
     }
 
-    @Scheduled(fixedRate = 3600000)
-    public void cleanupOldMessageBuckets() {
-        int sizeBefore = messageCache.size();
-        messageCache.entrySet().removeIf(entry ->
-                entry.getValue().getAvailableTokens() == rateLimitProperties.getMessageCapacity()
-        );
-        int sizeAfter = messageCache.size();
 
-        if (sizeBefore > sizeAfter) {
-            log.info("[MESSAGE_RATE_LIMIT] Cleaned up {} inactive message buckets", sizeBefore - sizeAfter);
-        }
+    public void clearBuckets() {
+        buckets.clear();
+        log.debug("All HTTP rate limit buckets cleared");
     }
 }

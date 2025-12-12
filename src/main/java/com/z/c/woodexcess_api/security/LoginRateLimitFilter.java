@@ -33,8 +33,6 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-
-
         if (!request.getRequestURI().equals("/api/auth/login") || !"POST".equals(request.getMethod())) {
             filterChain.doFilter(request, response);
             return;
@@ -70,10 +68,10 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
     private Bucket createNewBucket() {
 
         Bandwidth limit = Bandwidth.classic(
-                rateLimitProperties.getCapacity(),
+                rateLimitProperties.getLogin().getCapacity(),
                 Refill.intervally(
-                        rateLimitProperties.getRefillTokens(),
-                        Duration.ofMinutes(rateLimitProperties.getRefillMinutes())
+                        rateLimitProperties.getLogin().getRefillTokens(),
+                        Duration.ofMinutes(rateLimitProperties.getLogin().getRefillMinutes())
                 )
         );
         return Bucket.builder().addLimit(limit).build();
@@ -89,11 +87,11 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
     }
 
 
-    @Scheduled(fixedRate = 3600000) // cada 1 hora
+    @Scheduled(fixedRate = 3600000)
     public void cleanupOldBuckets() {
         int sizeBefore = cache.size();
         cache.entrySet().removeIf(entry ->
-                entry.getValue().getAvailableTokens() == rateLimitProperties.getCapacity()
+                entry.getValue().getAvailableTokens() == rateLimitProperties.getLogin().getCapacity()
         );
         int sizeAfter = cache.size();
 
