@@ -1,47 +1,107 @@
+# ==============================================================================
+# WOODEXCESS API - Test Environment Configuration
+# ==============================================================================
+
 spring:
   application:
     name: woodexcess-api
 
+  # Testcontainers PostgreSQL
   datasource:
-    url: jdbc:tc:postgresql:16-alpine:///test?TC_DAEMON=true
+    url: jdbc:tc:postgresql:16-alpine:///testdb?TC_DAEMON=true
+    username: test
+    password: test
     driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
 
+  # JPA Configuration
   jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: validate
+    show-sql: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
-    show-sql: false
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
+  # Flyway
   flyway:
     enabled: true
-    locations: classpath:db/migration
     baseline-on-migrate: true
+    locations: classpath:db/migration
 
-viacep:
-  url: viacep.com.br/ws
+  # Upload constraints
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 25MB
 
+  # Cache
+  cache:
+    type: simple
+    cache-names: cep
 
-logging:
-  level:
-    org.hibernate.SQL: DEBUG
-    org.hibernate.orm.jdbc.bind: TRACE
-    org.springframework.security: DEBUG
-    org.springframework.messaging: DEBUG
-    org.springframework.web.socket: DEBUG
-    com.z.c.woodexcess_api: DEBUG
+  # Spring Cloud
+  cloud:
+    compatibility-verifier:
+      enabled: false
 
+# ==============================================================================
+# JWT Configuration (Mock for Tests)
+# ==============================================================================
 jwt:
-  secret: test-secret-key-for-testing-purposes-only-must-be-at-least-512-bits-long-for-hs512-algorithm
-  expiration: 3600000
+  secret: d428cb12c786f4fed33f674b12fb9efa4a02aecc293681dcaeec923dd7a1be48f3e9a7e061648382b2be8826436f8773bc174730b354fdf6c59d4bb330398a49
+  access-expiration-ms: 900000
+  refresh-expiration-ms: 604800000
 
-refresh:
-  token:
-    expiration: 2592000000
+# ==============================================================================
+# Security Configuration
+# ==============================================================================
+security:
+  refresh-token:
     max-devices: 5
+    rotation-enabled: true
+    validate-context: true
+    reuse-detection: true
+  login:
+    rate-limit:
+      capacity: 100
+      refill-tokens: 100
+      refill-minutes: 1
 
+# ==============================================================================
+# Rate Limit Configuration
+# ==============================================================================
+app:
+  rate-limit:
+    login:
+      capacity: 100
+      refill-tokens: 100
+      refill-minutes: 1
+
+    message:
+      capacity: 20
+      refill-tokens: 20
+      refill-minutes: 1
+
+    websocket:
+      capacity: 30
+      refill-tokens: 5
+      refill-minutes: 1
+
+  # Image upload settings
+  listing:
+    max-images: 10
+    max-file-size: 5242880  # 5MB
+    allowed-extensions: jpg,jpeg,png,webp
+    thumbnail:
+      width: 300
+      height: 300
+
+# ==============================================================================
+# AWS S3 Configuration (Mock for Tests)
+# ==============================================================================
 aws:
   access-key-id: test-access-key-id
   secret-access-key: test-secret-access-key
@@ -50,23 +110,41 @@ aws:
     region: us-east-1
     cdn-url: ""
 
-app:
-  rate-limit:
-    login:
-      capacity: 5
-      refill-tokens: 5
-      refill-minutes: 1
+# ==============================================================================
+# External APIs
+# ==============================================================================
+# ViaCEP API
+viacep:
+  url: viacep.com.br/ws
 
-    message:
-      capacity: 15
-      refill-tokens: 15
-      refill-minutes: 1
+# Feign Client
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
+        loggerLevel: basic
 
-    websocket:
-      capacity: 30
-      refill-tokens: 5
-      refill-minutes: 1
+# ==============================================================================
+# WebSocket Configuration
+# ==============================================================================
+websocket:
+  allowed-origins: http://localhost:3000,http://localhost:5173
 
-
-
-
+# ==============================================================================
+# Logging Configuration
+# ==============================================================================
+logging:
+  level:
+    root: INFO
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.hibernate.orm.jdbc.bind: TRACE
+    org.springframework: WARN
+    org.springframework.security: DEBUG
+    org.springframework.messaging: DEBUG
+    org.springframework.web.socket: DEBUG
+    com.z.c.woodexcess_api: INFO
+    org.testcontainers: INFO
+    com.github.dockerjava: WARN
