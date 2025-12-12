@@ -484,6 +484,22 @@ class MessageControllerIntegrationTest {
     @Order(16)
     @DisplayName("POST /api/messages - Should apply rate limit after 20 messages")
     void sendMessage_RateLimitExceeded() throws Exception {
+
+        User rateLimitSender = User.builder()
+                .name("Rate Limit Tester")
+                .email("ratelimit-" + UUID.randomUUID() + "@test.com")
+                .phone("11999999999")
+                .password(passwordEncoder.encode("password123"))
+                .role(UserRole.USER)
+                .isActive(true)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+        rateLimitSender = userRepository.save(rateLimitSender);
+
+        String rateLimitToken = "Bearer " + jwtProvider.generateJwtToken(rateLimitSender);
+
+
         for (int i = 0; i < 20; i++) {
             MessageRequest request = MessageRequest.builder()
                     .recipientId(recipientId)
@@ -492,24 +508,23 @@ class MessageControllerIntegrationTest {
                     .build();
 
             mockMvc.perform(post("/api/messages")
-                            .header("Authorization", senderToken)
+                            .header("Authorization", rateLimitToken)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isCreated());
         }
 
 
-        MessageRequest request = MessageRequest.builder()
+        MessageRequest blockedRequest = MessageRequest.builder()
                 .recipientId(recipientId)
                 .listingId(listingId)
                 .content("This should be rate limited")
                 .build();
 
-        // Assert
         mockMvc.perform(post("/api/messages")
-                        .header("Authorization", senderToken)
+                        .header("Authorization", rateLimitToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(objectMapper.writeValueAsString(blockedRequest)))
                 .andDo(print())
                 .andExpect(status().isTooManyRequests())
                 .andExpect(jsonPath("$.status").value(429))
