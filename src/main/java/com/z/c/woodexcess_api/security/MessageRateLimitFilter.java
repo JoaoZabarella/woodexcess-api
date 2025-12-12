@@ -87,7 +87,7 @@ public class MessageRateLimitFilter extends OncePerRequestFilter {
         return Bucket.builder().addLimit(limit).build();
     }
 
-    @Scheduled(fixedRate = 3600000) // cada 1 hora
+    @Scheduled(fixedRate = 3600000)
     public void cleanupOldMessageBuckets() {
         int sizeBefore = messageCache.size();
         messageCache.entrySet().removeIf(entry ->
