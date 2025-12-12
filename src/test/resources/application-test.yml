@@ -20,6 +20,10 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
 
+viacep:
+  url: viacep.com.br/ws
+
+
 logging:
   level:
     org.hibernate.SQL: DEBUG
@@ -54,3 +58,5 @@ app:
       capacity: 30
       refill-tokens: 5
       refill-minutes: 1
+
+
