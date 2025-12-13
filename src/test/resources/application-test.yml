@@ -81,8 +81,8 @@ app:
       refill-minutes: 1
 
     message:
-      capacity: 20
-      refill-tokens: 20
+      capacity: 5
+      refill-tokens: 1
       refill-minutes: 1
 
     websocket:
