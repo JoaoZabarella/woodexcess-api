@@ -81,7 +81,7 @@ app:
       refill-minutes: 1
 
     message:
-      capacity: 5
+      capacity: 15
       refill-tokens: 1
       refill-minutes: 1
 
