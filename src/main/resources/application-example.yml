@@ -1,0 +1,21 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/woodexcess_db
+    username: YOUR_USERNAME
+    password: YOUR_PASSWORD
+
+security:
+  jwt:
+    secret-key: YOUR_SECRET_KEY_BASE64_MINIMUM_256_BITS
+
+aws:
+  access-key-id: YOUR_AWS_ACCESS_KEY
+  secret-access-key: YOUR_AWS_SECRET_KEY
+  s3:
+    bucket-name: YOUR_BUCKET_NAME
+
+websocket:
+  allowed-origins: http://localhost:3000,http://localhost:5173
+
+viacep:
+  url: https://viacep.com.br/ws

@@ -9,6 +9,7 @@ import com.z.c.woodexcess_api.repository.RefreshTokenRepository;
 import com.z.c.woodexcess_api.security.JwtProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,9 +24,10 @@ import java.util.HexFormat;
 import java.util.UUID;
 
 @Service
+@Slf4j
 public class RefreshTokenService {
 
-    private static final Logger logger = LoggerFactory.getLogger(RefreshTokenService.class);
+
 
     private final RefreshTokenRepository repository;
     private final JwtProvider jwtProvider;
@@ -67,7 +69,7 @@ public class RefreshTokenService {
 
         repository.save(refreshToken);
 
-        logger.info("Refresh token created for user: {} from IP: {}", user.getEmail(), refreshToken.getIpAddress());
+        log.info("Refresh token created for user: {} from IP: {}", user.getEmail(), refreshToken.getIpAddress());
         return token;
     }
 
@@ -155,7 +157,7 @@ public class RefreshTokenService {
         long activeTokens = repository.countActiveTokensByUserId(userId, LocalDateTime.now());
 
         if (activeTokens >= maxDevices) {
-            logger.info("Max devices reached for user. Removing oldest tokens.");
+            log.info("Max devices reached for user. Removing oldest tokens.");
             var tokens = repository.findActiveTokensByUserId(userId);
 
             // Ordenar por data de criação e revogar os mais antigos
@@ -175,14 +177,14 @@ public class RefreshTokenService {
         repository.findByTokenHash(tokenHash).ifPresent(rt -> {
             rt.setRevoked(true);
             repository.save(rt);
-            logger.info("Token revoked for user: {}", rt.getUser().getEmail());
+            log.info("Token revoked for user: {}", rt.getUser().getEmail());
         });
     }
 
     @Transactional
     public void revokeAllUserTokens(UUID userId) {
         repository.revokeAllByUserId(userId);
-        logger.warn("All tokens revoked for user ID: {}", userId);
+        log.warn("All tokens revoked for user ID: {}", userId);
     }
 
     /**
@@ -192,7 +194,7 @@ public class RefreshTokenService {
     @Transactional
     public void cleanupExpiredTokens() {
         repository.deleteExpiredAndRevokedTokens(LocalDateTime.now());
-        logger.info("Expired and revoked tokens cleaned up");
+        log.info("Expired and revoked tokens cleaned up");
     }
 
     private String hashToken(String token) {

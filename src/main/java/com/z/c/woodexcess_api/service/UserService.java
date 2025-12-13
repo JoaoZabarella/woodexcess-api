@@ -119,7 +119,7 @@ public class UserService {
                     return new EntityNotFoundException("User not found");
                 });
 
-        user.setActive(false);
+        user.setIsActive(false);
         repository.save(user);
 
         log.info("User deactivated successfully: {}", id);

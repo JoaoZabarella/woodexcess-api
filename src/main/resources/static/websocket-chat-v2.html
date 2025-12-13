@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WoodExcess - Chat em Tempo Real</title>
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+
+        .status.success {
+            background: #10b981;
+        }
+
+        .status.error {
+            background: #ef4444;
+        }
+
+        .status.warning {
+            background: #f59e0b;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #4b5563;
+            margin-bottom: 8px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .chat-container {
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            height: 400px;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f9fafb;
+            margin-bottom: 15px;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            max-width: 70%;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.sent {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .message.received {
+            background: white;
+            color: #1f2937;
+            border: 2px solid #e5e7eb;
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        .message.sent .message-header {
+            flex-direction: row-reverse;
+        }
+
+        .message-time {
+            opacity: 0.7;
+            font-size: 11px;
+        }
+
+        .message-content {
+            font-size: 14px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #9ca3af;
+            padding: 40px;
+            font-size: 14px;
+        }
+
+        .code-hint {
+            background: #f3f4f6;
+            border-left: 4px solid #667eea;
+            padding: 12px;
+            border-radius: 5px;
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 8px;
+        }
+
+        .divider {
+            height: 1px;
+            background: #e5e7eb;
+            margin: 30px 0;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>💬 WoodExcess Chat</h1>
+        <p>Sistema de Mensagens em Tempo Real</p>
+        <div class="status warning" id="connectionStatus">Desconectado</div>
+    </div>
+
+    <div class="content">
+        <!-- SEÇÃO 1: Autenticação -->
+        <div class="section">
+            <div class="section-title">
+                🔐 1. Autenticação
+            </div>
+            <div class="input-group">
+                <label for="jwtToken">JWT Token (do login)</label>
+                <textarea
+                        id="jwtToken"
+                        placeholder="Cole aqui o accessToken do endpoint /api/auth/login"
+                        rows="3"
+                ></textarea>
+                <div class="code-hint">
+                    💡 Faça POST /api/auth/login no Postman e copie o "accessToken"
+                </div>
+            </div>
+            <div class="button-group">
+                <button onclick="connect()">🔌 Conectar</button>
+                <button onclick="disconnect()">🔌 Desconectar</button>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- SEÇÃO 2: Configuração da Conversa -->
+        <div class="section">
+            <div class="section-title">
+                ⚙️ 2. Configuração da Conversa
+            </div>
+            <div class="input-group">
+                <label for="recipientId">ID do Destinatário (UUID)</label>
+                <input
+                        type="text"
+                        id="recipientId"
+                        placeholder="f3e6dcd4-b3f2-4c12-bc1e-ac79568386fa"
+                />
+            </div>
+            <div class="input-group">
+                <label for="listingId">ID do Anúncio (UUID)</label>
+                <input
+                        type="text"
+                        id="listingId"
+                        placeholder="7ab8c7bc-ef56-49d3-9acd-2f3b8ac9f36b"
+                />
+            </div>
+            <button onclick="loadConversationHistory()">
+                📚 Carregar Histórico
+            </button>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- SEÇÃO 3: Chat -->
+        <div class="section">
+            <div class="section-title">
+                💬 3. Mensagens
+            </div>
+            <div class="chat-container" id="chatMessages">
+                <div class="empty-state">
+                    Nenhuma mensagem ainda...
+                </div>
+            </div>
+            <div class="input-group">
+                <label for="messageContent">Sua mensagem</label>
+                <textarea
+                        id="messageContent"
+                        placeholder="Digite sua mensagem aqui..."
+                        rows="3"
+                ></textarea>
+            </div>
+            <div class="button-group">
+                <button onclick="sendMessage()">📤 Enviar Mensagem</button>
+                <button onclick="clearChat()">🗑️ Limpar Chat</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let stompClient = null;
+    let isConnected = false;
+    let currentUserEmail = null;
+
+    // Atualizar status de conexão
+    function updateStatus(message, type) {
+        const statusDiv = document.getElementById('connectionStatus');
+        statusDiv.textContent = message;
+        statusDiv.className = `status ${type}`;
+    }
+
+    // Conectar ao WebSocket
+    function connect() {
+        const token = document.getElementById('jwtToken').value.trim();
+
+        if (!token) {
+            alert('❌ Cole o JWT Token primeiro!');
+            return;
+        }
+
+        // Extrair email do token JWT
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            currentUserEmail = payload.sub;
+            console.log('✅ User email:', currentUserEmail);
+
+            // Verificar expiração
+            const exp = payload.exp * 1000;
+            const now = Date.now();
+
+            if (exp < now) {
+                alert('❌ Token EXPIRADO! Faça login novamente no Postman.');
+                return;
+            }
+
+            const timeLeft = Math.floor((exp - now) / 1000 / 60);
+            console.log(`⏰ Token válido por mais ${timeLeft} minutos`);
+
+        } catch (e) {
+            alert('❌ Token inválido! Verifique o formato.');
+            console.error('Erro ao decodificar token:', e);
+            return;
+        }
+
+        updateStatus('Conectando...', 'warning');
+
+        stompClient = new StompJs.Client({
+            webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+            connectHeaders: {
+                'Authorization': `Bearer ${token}`
+            },
+            debug: (str) => {
+                console.log('STOMP:', str);
+            },
+            onConnect: (frame) => {
+                console.log('✅ Conectado ao WebSocket:', frame);
+                isConnected = true;
+                updateStatus(`Conectado (${currentUserEmail})`, 'success');
+                subscribeToMessages();
+
+                // ✅ CARREGAR HISTÓRICO AUTOMATICAMENTE
+                setTimeout(() => {
+                    loadConversationHistory();
+                }, 500);
+            },
+            onStompError: (frame) => {
+                console.error('❌ Erro STOMP:', frame);
+                updateStatus('Erro: ' + (frame.headers['message'] || 'Desconhecido'), 'error');
+                isConnected = false;
+            },
+            onWebSocketClose: () => {
+                console.log('🔌 WebSocket fechado');
+                isConnected = false;
+                updateStatus('Desconectado', 'error');
+            },
+            onWebSocketError: (error) => {
+                console.error('❌ WebSocket error:', error);
+                updateStatus('Erro de conexão', 'error');
+            }
+        });
+
+        stompClient.activate();
+    }
+
+    // Inscrever para receber mensagens
+    function subscribeToMessages() {
+        console.log('📩 Inscrevendo em /user/queue/messages...');
+
+        stompClient.subscribe('/user/queue/messages', (message) => {
+            console.log('📨 Mensagem recebida via WebSocket:', message.body);
+            try {
+                const parsedMessage = JSON.parse(message.body);
+                const isReceived = parsedMessage.senderEmail !== currentUserEmail;
+                displayMessage(parsedMessage, isReceived ? 'received' : 'sent');
+            } catch (error) {
+                console.error('❌ Erro ao processar mensagem:', error);
+            }
+        });
+
+        stompClient.subscribe('/user/queue/typing', (notification) => {
+            console.log('✍️ Typing notification:', JSON.parse(notification.body));
+        });
+
+        console.log('✅ Inscrições realizadas com sucesso');
+    }
+
+    // Carregar histórico de mensagens (REST API)
+    async function loadConversationHistory() {
+        const recipientId = document.getElementById('recipientId').value.trim();
+        const listingId = document.getElementById('listingId').value.trim();
+
+        if (!recipientId || !listingId) {
+            console.warn('⚠️ Recipient ou Listing não preenchidos');
+            alert('⚠️ Preencha o ID do Destinatário e do Anúncio primeiro!');
+            return;
+        }
+
+        const token = document.getElementById('jwtToken').value.trim();
+
+        try {
+            console.log('📚 Carregando histórico de mensagens...');
+            updateStatus('Carregando histórico...', 'warning');
+
+            const response = await fetch(
+                `http://localhost:8080/api/messages/conversation?otherUserId=${recipientId}&listingId=${listingId}`,
+                {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            if (!response.ok) {
+                if (response.status === 403) {
+                    console.warn('⚠️ Sem permissão para acessar conversa (ainda não existe)');
+                    alert('⚠️ Conversa ainda não existe. Envie a primeira mensagem!');
+                    updateStatus(`Conectado (${currentUserEmail})`, 'success');
+                    return;
+                }
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const messages = await response.json();
+
+            console.log(`✅ ${messages.length} mensagens carregadas`);
+
+            // Limpar chat antes de carregar histórico
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = '';
+
+            if (messages.length === 0) {
+                chatMessages.innerHTML = '<div class="empty-state">Nenhuma mensagem ainda...</div>';
+            } else {
+                // Exibir cada mensagem
+                messages.forEach(msg => {
+                    const isReceived = msg.senderEmail !== currentUserEmail;
+                    displayMessage(msg, isReceived ? 'received' : 'sent');
+                });
+            }
+
+            // Scroll para o final
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            updateStatus(`Conectado (${currentUserEmail})`, 'success');
+
+        } catch (error) {
+            console.error('❌ Erro ao carregar histórico:', error);
+            alert('❌ Erro ao carregar histórico: ' + error.message);
+            updateStatus(`Conectado (${currentUserEmail})`, 'success');
+        }
+    }
+
+    // Enviar mensagem
+    function sendMessage() {
+        if (!isConnected) {
+            alert('❌ Conecte ao WebSocket primeiro!');
+            return;
+        }
+
+        const recipientId = document.getElementById('recipientId').value.trim();
+        const listingId = document.getElementById('listingId').value.trim();
+        const content = document.getElementById('messageContent').value.trim();
+
+        if (!recipientId || !listingId || !content) {
+            alert('❌ Preencha todos os campos!');
+            return;
+        }
+
+        const message = {
+            recipientId: recipientId,
+            listingId: listingId,
+            content: content
+        };
+
+        console.log('📤 Enviando mensagem:', message);
+
+        try {
+            stompClient.publish({
+                destination: '/app/chat.send',
+                body: JSON.stringify(message)
+            });
+
+            console.log('✅ Mensagem enviada para o servidor');
+
+            // Limpar campo de mensagem
+            document.getElementById('messageContent').value = '';
+
+        } catch (error) {
+            console.error('❌ Erro ao enviar mensagem:', error);
+            alert('❌ Erro ao enviar mensagem: ' + error.message);
+        }
+    }
+
+    // Exibir mensagem no chat
+    function displayMessage(message, type) {
+        const chatMessages = document.getElementById('chatMessages');
+
+        // Remover estado vazio se existir
+        const emptyState = chatMessages.querySelector('.empty-state');
+        if (emptyState) {
+            emptyState.remove();
+        }
+
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${type}`;
+
+        const time = new Date(message.createdAt).toLocaleTimeString('pt-BR', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        const senderName = type === 'received' ? message.senderEmail : 'Você';
+
+        messageDiv.innerHTML = `
+                <div class="message-header">
+                    <strong>${senderName}</strong>
+                    <span class="message-time">${time}</span>
+                </div>
+                <div class="message-content">${escapeHtml(message.content)}</div>
+            `;
+
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Escape HTML para prevenir XSS
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Desconectar
+    function disconnect() {
+        if (stompClient) {
+            stompClient.deactivate();
+            console.log('🔌 Desconectado');
+            updateStatus('Desconectado', 'error');
+            isConnected = false;
+            currentUserEmail = null;
+        }
+    }
+
+    // Limpar chat
+    function clearChat() {
+        const chatMessages = document.getElementById('chatMessages');
+        chatMessages.innerHTML = '<div class="empty-state">Nenhuma mensagem ainda...</div>';
+        console.log('🗑️ Chat limpo');
+    }
+
+    // Permitir enviar com Enter (Shift+Enter para quebra de linha)
+    document.addEventListener('DOMContentLoaded', () => {
+        const messageContent = document.getElementById('messageContent');
+
+        messageContent.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    });
+
+    // Desconectar ao fechar página
+    window.addEventListener('beforeunload', () => {
+        disconnect();
+    });
+</script>
+</body>
+</html>

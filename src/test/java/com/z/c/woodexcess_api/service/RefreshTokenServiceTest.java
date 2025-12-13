@@ -480,7 +480,7 @@ class RefreshTokenServiceTest {
                     .email("test@example.com")
                     .name("Test User")
                     .role(UserRole.USER)
-                    .active(true)
+                    .isActive(true)
                     .build();
         }
 

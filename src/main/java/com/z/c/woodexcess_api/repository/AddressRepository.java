@@ -15,18 +15,18 @@ import java.util.UUID;
 @Repository
 public interface AddressRepository extends JpaRepository<Address, UUID> {
 
-    Optional<Address> findByIdAndActiveTrue(UUID id);
+    Optional<Address> findByIdAndIsActiveTrue(UUID id);
 
-    List<Address> findByUserIdAndActiveTrue(UUID userId);
+    List<Address> findByUserIdAndIsActiveTrue(UUID userId);
 
-    Optional<Address> findByUserIdAndIsPrimaryTrueAndActiveTrue(UUID userId);
+    Optional<Address> findByUserIdAndIsPrimaryTrueAndIsActiveTrue(UUID userId);
 
-    Optional<Address> findByUserAndActiveAndIsPrimary(User user, Boolean active, Boolean isPrimary);
+    Optional<Address> findByUserAndIsActiveAndIsPrimary(User user, Boolean active, Boolean isPrimary);
 
-    @Query("SELECT COUNT(a) FROM Address a WHERE a.user.id = :userId AND a.active = true")
+    @Query("SELECT COUNT(a) FROM Address a WHERE a.user.id = :userId AND a.isActive = true")
     long countActiveAddressesByUser(@Param("userId") UUID userId);
 
-    @Query("SELECT a FROM Address a WHERE a.user.id = :userId AND a.zipCode = :zipCode AND a.number = :number AND a.active = true")
+    @Query("SELECT a FROM Address a WHERE a.user.id = :userId AND a.zipCode = :zipCode AND a.number = :number AND a.isActive = true")
     Optional<Address> findDuplicateAddress(
             @Param("userId") UUID userId,
             @Param("zipCode") String zipCode,

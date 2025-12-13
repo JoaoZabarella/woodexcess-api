@@ -85,7 +85,7 @@ public class AddressService {
         log.info("Finding all addresses for user {}", userId);
         userService.findEntityById(userId);
 
-        return addressRepository.findByUserIdAndActiveTrue(userId)
+        return addressRepository.findByUserIdAndIsActiveTrue(userId)
                 .stream()
                 .map(addressMapper::toResponseDTO)
                 .collect(Collectors.toList());
@@ -95,7 +95,7 @@ public class AddressService {
     public AddressResponse findPrimaryByUser(UUID userId) {
         log.info("Finding primary address for user {}", userId);
 
-        return addressRepository.findByUserIdAndIsPrimaryTrueAndActiveTrue(userId)
+        return addressRepository.findByUserIdAndIsPrimaryTrueAndIsActiveTrue(userId)
                 .map(addressMapper::toResponseDTO)
                 .orElseThrow(() -> new AddressNotFoundException("Primary address not found for user: " + userId));
     }
@@ -137,7 +137,7 @@ public class AddressService {
         log.info("Deleting address {}", id);
 
         Address address = findEntityById(id);
-        address.desactivate();
+        address.deactivate();
         addressRepository.save(address);
 
         log.info("Address {} deleted successfully", id);
@@ -145,7 +145,7 @@ public class AddressService {
 
     @Transactional(readOnly = true)
     public Address findEntityById(UUID id) {
-        return addressRepository.findByIdAndActiveTrue(id)
+        return addressRepository.findByIdAndIsActiveTrue(id)
                 .orElseThrow(() -> new AddressNotFoundException("Address not found with id: " + id));
     }
 

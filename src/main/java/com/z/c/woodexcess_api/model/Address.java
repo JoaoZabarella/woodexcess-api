@@ -60,17 +60,18 @@ public class Address {
     @Builder.Default
     private String country = "Brasil";
 
-    @Column(name = "active", nullable = false)
-    @Builder.Default
-    private Boolean active = true;
-
     @Column(name = "is_primary", nullable = false)
     @Builder.Default
     private Boolean isPrimary = false;
 
+    @Column(name = "is_active", nullable = false)
+    @Builder.Default
+    private Boolean isActive = true;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
 
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
@@ -96,6 +97,21 @@ public class Address {
         return sb.toString();
     }
 
+
+
+    @Transient
+    public boolean isActive() {
+        return Boolean.TRUE.equals(this.isActive);
+    }
+
+    public void activate() {
+        this.isActive = true;
+    }
+
+    public void deactivate() {
+        this.isActive = false;
+    }
+
     @Transient
     public String getFormatedZipCode() {
         if (zipCode == null || zipCode.length() != 9) {
@@ -108,24 +124,6 @@ public class Address {
     public void setPrimary(Boolean primary) {
         this.isPrimary = primary;
     }
-
-
-    public void desactivate() {
-        this.active = false;
-        this.isPrimary = false;
-    }
-
-
-    public void activate() {
-        this.active = true;
-    }
-
-
-    @Transient
-    public boolean isActive() {
-        return Boolean.TRUE.equals(active);
-    }
-
 
     @Transient
     public boolean isPrimary() {
@@ -157,7 +155,7 @@ public class Address {
                 ", city='" + city + '\'' +
                 ", state='" + state + '\'' +
                 ", zipCode='" + zipCode + '\'' +
-                ", active=" + active +
+                ", active=" + isActive +
                 ", isPrimary=" + isPrimary +
                 '}';
     }

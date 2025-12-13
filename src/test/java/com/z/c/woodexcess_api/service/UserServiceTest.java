@@ -75,7 +75,7 @@ class UserServiceTest {
                 .name("Test User")
                 .phone("123456789")
                 .role(UserRole.USER)
-                .active(true)
+                .isActive(true)
                 .build();
 
         List<AddressRequest> addresses = new ArrayList<>();
@@ -88,22 +88,22 @@ class UserServiceTest {
                 addresses);
 
         registerResponse = new RegisterResponse(
-                UUID.randomUUID().toString(),
+                UUID.randomUUID(),
                 "New User",
                 "new@mail.com",
                 "987654321",
                 true,
                 UserRole.USER);
 
-        // UserResponse: 7 parâmetros (id, name, email, phone, active, role, addresses)
+
         userResponse = new UserResponse(
                 USER_ID,
                 "Test User",
                 EMAIL,
                 "123456789",
-                true, // ← active
+                true,
                 UserRole.USER,
-                new ArrayList<>() // ← Lista de AddressResponse
+                new ArrayList<>()
         );
     }
 
@@ -348,7 +348,7 @@ class UserServiceTest {
 
         userService.deactivateUser(USER_ID);
 
-        assertThat(user.getActive()).isFalse();
+        assertThat(user.getIsActive()).isFalse();
 
         verify(repository).findById(USER_ID);
         verify(repository).save(user);
