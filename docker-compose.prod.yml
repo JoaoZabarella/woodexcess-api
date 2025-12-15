@@ -6,10 +6,10 @@ services:
     container_name: woodexcess-db-prod
     environment:
       POSTGRES_DB: woodexcess
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${DB_PASSWORD:?Database password is required}  # ⭐ Obrigatório
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "5432:5432"
+      - "5438:5438"
     volumes:
       - postgres_data_prod:/var/lib/postgresql/data
     networks:
