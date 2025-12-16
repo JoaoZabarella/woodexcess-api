@@ -35,7 +35,7 @@ public class Offer {
     @JoinColumn(name = "seller_id", nullable = false)
     private  User seller;
 
-    @Column(name = "offer_price", nullable = false, precision = 10, scale = 2)
+    @Column(name = "offered_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal offeredPrice;
 
     @Column(name = "quantity", nullable = false)
@@ -78,7 +78,7 @@ public class Offer {
         return status == OfferStatus.PENDING && !isExpired();
     }
 
-    public boolean canBeRejected(){
+    public boolean canBeCountered(){
         return status == OfferStatus.PENDING && !isExpired();
     }
 
