@@ -1,8 +1,8 @@
 package com.z.c.woodexcess_api.model;
 
-import com.z.c.woodexcess_api.enums.Condition;
-import com.z.c.woodexcess_api.enums.ListingStatus;
-import com.z.c.woodexcess_api.enums.MaterialType;
+import com.z.c.woodexcess_api.model.enums.Condition;
+import com.z.c.woodexcess_api.model.enums.ListingStatus;
+import com.z.c.woodexcess_api.model.enums.MaterialType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;

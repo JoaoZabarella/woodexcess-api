@@ -1,6 +1,6 @@
 package com.z.c.woodexcess_api.model;
 
-import com.z.c.woodexcess_api.enums.UserRole;
+import com.z.c.woodexcess_api.model.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
 

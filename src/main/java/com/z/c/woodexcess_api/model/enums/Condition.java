@@ -1,4 +1,4 @@
-package com.z.c.woodexcess_api.enums;
+package com.z.c.woodexcess_api.model.enums;
 
 public enum Condition {
     NEW("Novo"),

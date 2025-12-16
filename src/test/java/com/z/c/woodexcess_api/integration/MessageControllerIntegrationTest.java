@@ -2,10 +2,10 @@ package com.z.c.woodexcess_api.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.z.c.woodexcess_api.dto.message.MessageRequest;
-import com.z.c.woodexcess_api.enums.Condition;
-import com.z.c.woodexcess_api.enums.ListingStatus;
-import com.z.c.woodexcess_api.enums.MaterialType;
-import com.z.c.woodexcess_api.enums.UserRole;
+import com.z.c.woodexcess_api.model.enums.Condition;
+import com.z.c.woodexcess_api.model.enums.ListingStatus;
+import com.z.c.woodexcess_api.model.enums.MaterialType;
+import com.z.c.woodexcess_api.model.enums.UserRole;
 import com.z.c.woodexcess_api.model.Address;
 import com.z.c.woodexcess_api.model.MaterialListing;
 import com.z.c.woodexcess_api.model.Message;

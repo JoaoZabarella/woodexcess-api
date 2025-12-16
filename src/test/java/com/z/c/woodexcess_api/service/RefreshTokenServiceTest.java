@@ -1,7 +1,7 @@
 package com.z.c.woodexcess_api.service;
 
 import com.z.c.woodexcess_api.dto.auth.TokenRotationResult;
-import com.z.c.woodexcess_api.enums.UserRole;
+import com.z.c.woodexcess_api.model.enums.UserRole;
 import com.z.c.woodexcess_api.exception.auth.RefreshTokenException;
 import com.z.c.woodexcess_api.model.RefreshToken;
 import com.z.c.woodexcess_api.model.User;

@@ -1,7 +1,7 @@
 package com.z.c.woodexcess_api.dto.listing;
 
-import com.z.c.woodexcess_api.enums.Condition;
-import com.z.c.woodexcess_api.enums.MaterialType;
+import com.z.c.woodexcess_api.model.enums.Condition;
+import com.z.c.woodexcess_api.model.enums.MaterialType;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Min;

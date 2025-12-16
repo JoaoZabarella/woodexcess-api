@@ -1,7 +1,7 @@
 package com.z.c.woodexcess_api.dto.user;
 
 import com.z.c.woodexcess_api.dto.address.AddressResponse;
-import com.z.c.woodexcess_api.enums.UserRole;
+import com.z.c.woodexcess_api.model.enums.UserRole;
 import lombok.Builder;
 
 import java.util.List;

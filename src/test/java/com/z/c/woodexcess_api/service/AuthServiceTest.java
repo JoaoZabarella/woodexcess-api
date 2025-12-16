@@ -4,7 +4,7 @@ import com.z.c.woodexcess_api.dto.auth.LoginResponse;
 import com.z.c.woodexcess_api.dto.auth.TokenRotationResult;
 import com.z.c.woodexcess_api.model.User;
 import com.z.c.woodexcess_api.repository.UserRepository;
-import com.z.c.woodexcess_api.enums.UserRole;
+import com.z.c.woodexcess_api.model.enums.UserRole;
 import com.z.c.woodexcess_api.security.JwtProvider;
 import com.z.c.woodexcess_api.service.security.AuthService;
 import com.z.c.woodexcess_api.service.security.RefreshTokenService;

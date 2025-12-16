@@ -1,7 +1,7 @@
 package com.z.c.woodexcess_api.dto.listing;
 
-import com.z.c.woodexcess_api.enums.Condition;
-import com.z.c.woodexcess_api.enums.MaterialType;
+import com.z.c.woodexcess_api.model.enums.Condition;
+import com.z.c.woodexcess_api.model.enums.MaterialType;
 import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;

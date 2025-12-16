@@ -11,7 +11,7 @@ import com.z.c.woodexcess_api.exception.users.PasswordIncorrectException;
 import com.z.c.woodexcess_api.mapper.UserMapper;
 import com.z.c.woodexcess_api.model.User;
 import com.z.c.woodexcess_api.repository.UserRepository;
-import com.z.c.woodexcess_api.enums.UserRole;
+import com.z.c.woodexcess_api.model.enums.UserRole;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.constraints.NotNull;
 
