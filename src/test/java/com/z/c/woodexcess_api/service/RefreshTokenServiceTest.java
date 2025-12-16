@@ -31,15 +31,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-/**
- * Comprehensive unit tests for RefreshTokenService.
- *
- * Test Strategy:
- * - Uses Given-When-Then pattern
- * - Tests behavior, not implementation
- * - Covers happy paths and edge cases
- * - Uses nested classes for logical grouping
- */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("RefreshTokenService")
 class RefreshTokenServiceTest {

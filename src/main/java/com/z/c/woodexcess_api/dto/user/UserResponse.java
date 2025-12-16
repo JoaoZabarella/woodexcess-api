@@ -13,6 +13,7 @@ public record UserResponse(
         String name,
         String email,
         String phone,
+        String avatarUrl,
         Boolean active,
         UserRole role,
         List<AddressResponse> addresses) {

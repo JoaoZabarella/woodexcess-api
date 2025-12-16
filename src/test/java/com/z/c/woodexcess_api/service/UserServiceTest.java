@@ -101,6 +101,7 @@ class UserServiceTest {
                 "Test User",
                 EMAIL,
                 "123456789",
+                "http://avatar.url/image.png",
                 true,
                 UserRole.USER,
                 new ArrayList<>()
@@ -174,7 +175,7 @@ class UserServiceTest {
     @Test
     @DisplayName("Should update user successfully with same email")
     void shouldUpdateUserWithSameEmail() {
-        UpdateUserRequest updateRequest = new UpdateUserRequest("Updated Name", EMAIL);
+        UpdateUserRequest updateRequest = new UpdateUserRequest("Updated Name", EMAIL,"11971407689", "http://avatar.url/image.png");
         when(repository.findById(USER_ID)).thenReturn(Optional.of(user));
         when(repository.save(user)).thenReturn(user);
         when(mapper.toUserResponse(user)).thenReturn(userResponse);
@@ -194,7 +195,7 @@ class UserServiceTest {
     @DisplayName("Should update user with new email")
     void shouldUpdateUserWithNewEmail() {
         String newEmail = "newemail@mail.com";
-        UpdateUserRequest updateRequest = new UpdateUserRequest("Updated Name", newEmail);
+        UpdateUserRequest updateRequest = new UpdateUserRequest("Updated Name", newEmail, "11971407689", "http://avatar.url/image.png");
 
         when(repository.findById(USER_ID)).thenReturn(Optional.of(user));
         when(repository.findByEmail(newEmail)).thenReturn(Optional.empty());
@@ -215,7 +216,7 @@ class UserServiceTest {
     @DisplayName("Should throw EmailAlredyExistException when new email exists")
     void shouldThrowExceptionWhenNewEmailExists() {
         String existingEmail = "existing@mail.com";
-        UpdateUserRequest updateRequest = new UpdateUserRequest("Name", existingEmail);
+        UpdateUserRequest updateRequest = new UpdateUserRequest("Name", existingEmail, "11971407689", "http://avatar.url/image.png");
         User anotherUser = User.builder().id(UUID.randomUUID()).email(existingEmail).build();
 
         when(repository.findById(USER_ID)).thenReturn(Optional.of(user));
@@ -234,7 +235,7 @@ class UserServiceTest {
     @DisplayName("Should throw EntityNotFoundException when user not found for update")
     void shouldThrowExceptionWhenUserNotFoundForUpdate() {
         UUID nonExistentId = UUID.randomUUID();
-        UpdateUserRequest updateRequest = new UpdateUserRequest("Name", "email@test.com");
+        UpdateUserRequest updateRequest = new UpdateUserRequest("Name", "email@test.com", "11971407689", "http://avatar.url/image.png");
 
         when(repository.findById(nonExistentId)).thenReturn(Optional.empty());
 
