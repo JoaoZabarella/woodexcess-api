@@ -96,4 +96,12 @@ public interface OfferRepository extends JpaRepository<Offer, UUID> {
             @Param("status") OfferStatus status
     );
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT o FROM Offer o " +
+            "LEFT JOIN FETCH o.listing l " +
+            "LEFT JOIN FETCH o.buyer b " +
+            "LEFT JOIN FETCH o.seller s " +
+            "WHERE o.id = :offerId")
+    Optional<Offer> findByIdWithPessimisticLock(@Param("offerId") UUID offerId);
+
 }
