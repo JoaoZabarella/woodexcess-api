@@ -20,25 +20,39 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
     Page<Notification> findByUserIdOrderByCreatedAtDesc(UUID userId, Pageable pageable);
 
     @EntityGraph(attributePaths = {"user"})
-    Page<Notification> findByUserIdAndIsReadFalseOrderByCreatedAtDesc(UUID userId, Pageable pageable);
+    Page<Notification> findByUserIdAndIsReadOrderByCreatedAtDesc(UUID userId, Boolean isRead, Pageable pageable);
 
     @EntityGraph(attributePaths = {"user"})
-    Page<Notification> findByUserIdAndTypeOrderByCreatedAtDesc(
+    Page<Notification> findByUserIdAndTypeOrderByCreatedAtDesc(UUID userId, NotificationType type, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"user"})
+    Page<Notification> findByUserIdAndIsReadAndTypeOrderByCreatedAtDesc(
             UUID userId,
+            Boolean isRead,
             NotificationType type,
             Pageable pageable
     );
 
+    @EntityGraph(attributePaths = {"user"})
+    List<Notification> findByUserIdAndIsReadFalse(UUID userId);
+
+    @EntityGraph(attributePaths = {"user"})
+    List<Notification> findByUserIdAndIsReadTrue(UUID userId);
+
     @Query("SELECT n FROM Notification n " +
             "LEFT JOIN FETCH n.user u " +
-            "WHERE n.user.id = :userId AND n.createdAt > :since " +
-            "ORDER BY n.createdAt DESC")
-    List<Notification> findRecentNotificationsWithUser(
-            @Param("userId") UUID userId,
-            @Param("since") LocalDateTime since
-    );
+            "WHERE n.user.id = :userId " +
+            "ORDER BY n.createdAt DESC " +
+            "LIMIT :limit")
+    List<Notification> findTopNByUserIdOrderByCreatedAtDesc(@Param("userId") UUID userId, @Param("limit") int limit);
 
     long countByUserIdAndIsReadFalse(UUID userId);
+
+    @Modifying
+    void deleteByUserId(UUID userId);
+
+    @Modifying
+    int deleteByIsReadTrueAndCreatedAtBefore(LocalDateTime cutoffDate);
 
     @Modifying
     @Query("UPDATE Notification n SET n.isRead = true, n.readAt = :readAt WHERE n.user.id = :userId AND n.isRead = false")
@@ -54,8 +68,5 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
 
     @Query(value = "SELECT * FROM notifications n WHERE n.user_id = :userId AND n.metadata->>'offer_id' = :offerId",
             nativeQuery = true)
-    List<Notification> findByUserIdAndOfferIdInMetadata(
-            @Param("userId") UUID userId,
-            @Param("offerId") String offerId
-    );
+    List<Notification> findByUserIdAndOfferIdInMetadata(@Param("userId") UUID userId, @Param("offerId") String offerId);
 }
