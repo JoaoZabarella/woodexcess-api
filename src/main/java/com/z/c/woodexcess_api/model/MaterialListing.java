@@ -55,7 +55,6 @@ public class MaterialListing {
     @JoinColumn(name = "address_id", foreignKey = @ForeignKey(name = "fk_listing_address"))
     private Address address;
 
-    // Denormalized fields for faster filtering
     @Column(name = "city", nullable = false, length = 100)
     private String city;
 

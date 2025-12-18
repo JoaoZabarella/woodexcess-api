@@ -1,4 +1,4 @@
 package com.z.c.woodexcess_api.service;
 
-public class OfferService {
+public class NotificationService {
 }
