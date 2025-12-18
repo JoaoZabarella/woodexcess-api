@@ -1,4 +1,15 @@
 package com.z.c.woodexcess_api.config;
 
-public class ClockCOnfig {
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import java.time.Clock;
+
+@Configuration
+public class ClockConfig {
+
+    @Bean
+    public Clock clock(){
+        return Clock.systemDefaultZone();
+    }
 }
