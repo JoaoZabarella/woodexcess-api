@@ -1,6 +1,5 @@
 package com.z.c.woodexcess_api.model;
 
-
 import com.z.c.woodexcess_api.model.enums.NotificationType;
 import jakarta.persistence.*;
 import lombok.*;

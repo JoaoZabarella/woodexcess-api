@@ -9,6 +9,8 @@ import com.z.c.woodexcess_api.model.MaterialListing;
 import com.z.c.woodexcess_api.model.User;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Component
 public class MaterialListingMapper {
 
