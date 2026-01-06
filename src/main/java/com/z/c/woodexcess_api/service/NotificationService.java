@@ -197,7 +197,7 @@
         public List<NotificationResponse> getRecentNotifications(UUID userId, int limit) {
             log.debug("Fetching recent {} notifications for user: {}", limit, userId);
 
-            // use a Pageable to fetch the top N items
+
             PageRequest pageRequest = PageRequest.of(0, Math.max(1, limit));
             List<Notification> notifications = notificationRepository
                     .findByUserIdOrderByCreatedAtDesc(userId, pageRequest)
