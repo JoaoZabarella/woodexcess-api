@@ -4,9 +4,12 @@ import com.z.c.woodexcess_api.model.enums.OfferStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -45,7 +48,8 @@ public class Offer {
     private String message;
 
     @Enumerated(EnumType.STRING)
-    @Column(name= "status", nullable = false, columnDefinition = "offer_status")
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name= "status", nullable = false)
     private OfferStatus status = OfferStatus.PENDING;
 
     @Column(name = "expires_at", nullable = false)
@@ -70,16 +74,18 @@ public class Offer {
         }
     }
 
-    public boolean isExpired() {
-        return LocalDateTime.now().isAfter(expiresAt) && status == OfferStatus.PENDING;
+    public boolean isExpiredAt(LocalDateTime now) {
+        return expiresAt != null
+                && now.isAfter(expiresAt)
+                && status == OfferStatus.PENDING;
     }
 
-    public boolean canBeAccepted(){
-        return status == OfferStatus.PENDING && !isExpired();
+    public boolean canBeAcceptedAt(LocalDateTime now) {
+        return status == OfferStatus.PENDING && !isExpiredAt(now);
     }
 
-    public boolean canBeCountered(){
-        return status == OfferStatus.PENDING && !isExpired();
+    public boolean canBeCounteredAt(LocalDateTime now) {
+        return status == OfferStatus.PENDING && !isExpiredAt(now);
     }
-
 }
+

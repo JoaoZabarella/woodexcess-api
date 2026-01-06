@@ -118,7 +118,7 @@ public class OfferService {
         notificationService.createNotification(notificationCommand);
 
         log.info("Offer created successfully: {}", savedOffer.getId());
-        return OfferMapper.toResponse(savedOffer);
+        return OfferMapper.toResponse(savedOffer, now);
     }
 
     @Transactional
@@ -136,14 +136,14 @@ public class OfferService {
             throw new BusinessException("Only the seller can make a counter-offer");
         }
 
-        if (!originalOffer.canBeCountered()) {
+        LocalDateTime now = LocalDateTime.now(clock);
+        if (!originalOffer.canBeCounteredAt(now)) {
             throw new BusinessException("Offer cannot be countered (expired or not pending)");
         }
 
         originalOffer.setStatus(OfferStatus.COUNTER_OFFERED);
         offerRepository.save(originalOffer);
 
-        LocalDateTime now = LocalDateTime.now(clock);
         LocalDateTime expiresAt = now.plusHours(defaultOfferExpirationHours);
 
         Offer counterOffer = Offer.builder()
@@ -178,7 +178,7 @@ public class OfferService {
         notificationService.createNotification(notificationCommand);
 
         log.info("Counter-offer created successfully: {}", savedCounterOffer.getId());
-        return OfferMapper.toResponse(savedCounterOffer);
+        return OfferMapper.toResponse(savedCounterOffer, now);
     }
 
     @Transactional
@@ -192,7 +192,8 @@ public class OfferService {
             throw new BusinessException("Only the seller can accept this offer");
         }
 
-        if (!offer.canBeAccepted()) {
+        LocalDateTime now = LocalDateTime.now(clock);
+        if (!offer.canBeAcceptedAt(now)) {
             throw new BusinessException("Offer cannot be accepted (expired or not pending)");
         }
 
@@ -219,7 +220,7 @@ public class OfferService {
         publishOfferAcceptedEvent(acceptedOffer, offersToReject);
 
         log.info("Offer accepted successfully: {}", offerId);
-        return OfferMapper.toResponse(acceptedOffer);
+        return OfferMapper.toResponse(acceptedOffer, now);
     }
 
     @Transactional
@@ -257,8 +258,9 @@ public class OfferService {
 
         notificationService.createNotification(notificationCommand);
 
+        LocalDateTime now = LocalDateTime.now(clock);
         log.info("Offer rejected successfully: {}", offerId);
-        return OfferMapper.toResponse(rejectedOffer);
+        return OfferMapper.toResponse(rejectedOffer, now);
     }
 
     @Transactional
@@ -290,8 +292,9 @@ public class OfferService {
 
         notificationService.createNotification(notificationCommand);
 
+        LocalDateTime now = LocalDateTime.now(clock);
         log.info("Offer cancelled successfully: {}", offerId);
-        return OfferMapper.toResponse(cancelledOffer);
+        return OfferMapper.toResponse(cancelledOffer, now);
     }
 
     @Transactional(readOnly = true)
@@ -305,7 +308,8 @@ public class OfferService {
             throw new BusinessException("You don't have permission to view this offer");
         }
 
-        return OfferMapper.toResponse(offer);
+        LocalDateTime now = LocalDateTime.now(clock);
+        return OfferMapper.toResponse(offer, now);
     }
 
     @Transactional(readOnly = true)
@@ -320,7 +324,8 @@ public class OfferService {
             offers = offerRepository.findByBuyerIdOrderByCreatedAtDesc(buyerId, pageable);
         }
 
-        return offers.map(offer -> OfferMapper.toSummaryResponse(offer, buyerId));
+        LocalDateTime now = LocalDateTime.now(clock);
+        return offers.map(offer -> OfferMapper.toSummaryResponse(offer, buyerId, now));
     }
 
     @Transactional(readOnly = true)
@@ -333,7 +338,9 @@ public class OfferService {
         } else {
             offers = offerRepository.findBySellerIdOrderByCreatedAtDesc(sellerId, pageable);
         }
-        return offers.map(offer -> OfferMapper.toSummaryResponse(offer, sellerId));
+
+        LocalDateTime now = LocalDateTime.now(clock);
+        return offers.map(offer -> OfferMapper.toSummaryResponse(offer, sellerId, now));
     }
 
     @Transactional(readOnly = true)
@@ -351,8 +358,9 @@ public class OfferService {
             throw new BusinessException("You don't have permission to view this offer chain");
         }
 
+        LocalDateTime now = LocalDateTime.now(clock);
         return chain.stream()
-                .map(OfferMapper::toResponse)
+                .map(offer -> OfferMapper.toResponse(offer, now))
                 .toList();
     }
 
