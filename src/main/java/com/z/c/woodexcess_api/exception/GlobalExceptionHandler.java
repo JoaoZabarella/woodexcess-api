@@ -30,6 +30,49 @@ import java.util.List;
 @Slf4j
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<ErrorResponse> handleValidationException(
+            ValidationException ex, HttpServletRequest request) {
+
+        log.warn("Validation error on path: {}: {}", request.getRemoteAddr());
+
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                "Bad request data: " + ex.getMessage(),
+                request.getRequestURI()
+        );
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleResourceNotFound(
+            ResourceNotFoundException ex,
+            HttpServletRequest request
+    ) {
+        log.error("Resource not found on path {}: {}", request.getRequestURI(), ex.getMessage());
+
+        return buildErrorResponse(
+                HttpStatus.NOT_FOUND,
+                "Not Found:",
+                request.getRequestURI()
+        );
+
+    }
+
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ErrorResponse> handleBusinessException(
+            BusinessException ex,
+            HttpServletRequest request
+    ) {
+        log.warn("Business rule violation on path {}: {}", request.getRequestURI(), ex.getMessage());
+
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+    }
+
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentials(
             BadCredentialsException ex,
