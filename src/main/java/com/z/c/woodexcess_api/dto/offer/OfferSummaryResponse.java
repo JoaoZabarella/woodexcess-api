@@ -13,6 +13,8 @@ public record OfferSummaryResponse(
         UUID listingId,
         String listingTitle,
         String listingImageUrl,
+        UUID buyerId,
+        UUID sellerId,
         String otherPartyName,
         String otherPartyAvatarUrl,
         BigDecimal offeredPrice,

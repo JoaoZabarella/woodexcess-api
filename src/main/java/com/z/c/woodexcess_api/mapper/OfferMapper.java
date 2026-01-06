@@ -6,12 +6,13 @@ import com.z.c.woodexcess_api.model.Offer;
 import com.z.c.woodexcess_api.model.User;
 import lombok.experimental.UtilityClass;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @UtilityClass
 public class OfferMapper {
 
-    public OfferResponse toResponse(Offer offer) {
+    public OfferResponse toResponse(Offer offer, LocalDateTime now) {
         if (offer == null) {
             return null;
         }
@@ -38,13 +39,13 @@ public class OfferMapper {
                 offer.getParentOffer() != null ? offer.getParentOffer().getId() : null,
                 offer.getCreatedAt(),
                 offer.getUpdatedAt(),
-                offer.isExpired(),
-                offer.canBeAccepted(),
-                offer.canBeCountered()
+                offer.isExpiredAt(now),
+                offer.canBeAcceptedAt(now),
+                offer.canBeCounteredAt(now)
         );
     }
 
-    public OfferSummaryResponse toSummaryResponse(Offer offer, UUID currentUserId) {
+    public OfferSummaryResponse toSummaryResponse(Offer offer, UUID currentUserId, LocalDateTime now) {
         if (offer == null) {
             return null;
         }
@@ -61,6 +62,8 @@ public class OfferMapper {
                                 ? String.valueOf(offer.getListing().getImages().get(0))
                                 : null
                 )
+                .buyerId(offer.getBuyer().getId())
+                .sellerId(offer.getSeller().getId())
                 .otherPartyName(otherParty.getName())
                 .otherPartyAvatarUrl(otherParty.getAvatarUrl())
                 .offeredPrice(offer.getOfferedPrice())
@@ -68,7 +71,7 @@ public class OfferMapper {
                 .status(offer.getStatus())
                 .expiresAt(offer.getExpiresAt())
                 .createdAt(offer.getCreatedAt())
-                .isExpired(offer.isExpired())
+                .isExpired(offer.isExpiredAt(now))
                 .build();
     }
 }
