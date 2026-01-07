@@ -1,7 +1,7 @@
 package com.z.c.woodexcess_api.dto.user;
 
 import com.z.c.woodexcess_api.dto.address.AddressResponse;
-import com.z.c.woodexcess_api.enums.UserRole;
+import com.z.c.woodexcess_api.model.enums.UserRole;
 import lombok.Builder;
 
 import java.util.List;
@@ -13,6 +13,7 @@ public record UserResponse(
         String name,
         String email,
         String phone,
+        String avatarUrl,
         Boolean active,
         UserRole role,
         List<AddressResponse> addresses) {

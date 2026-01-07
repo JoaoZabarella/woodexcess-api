@@ -4,9 +4,9 @@ import com.z.c.woodexcess_api.dto.listing.CreateListingRequest;
 import com.z.c.woodexcess_api.dto.listing.ListingFilterRequest;
 import com.z.c.woodexcess_api.dto.listing.ListingResponse;
 import com.z.c.woodexcess_api.dto.listing.UpdateListingRequest;
-import com.z.c.woodexcess_api.enums.ListingStatus;
-import com.z.c.woodexcess_api.enums.MaterialType;
-import com.z.c.woodexcess_api.enums.UserRole;
+import com.z.c.woodexcess_api.exception.ResourceNotFoundException;
+import com.z.c.woodexcess_api.model.enums.ListingStatus;
+import com.z.c.woodexcess_api.model.enums.UserRole;
 import com.z.c.woodexcess_api.exception.BusinessException;
 import com.z.c.woodexcess_api.exception.address.AddressNotFoundException;
 import com.z.c.woodexcess_api.exception.listing.ListingNotFoundException;
@@ -17,7 +17,9 @@ import com.z.c.woodexcess_api.model.MaterialListing;
 import com.z.c.woodexcess_api.model.User;
 import com.z.c.woodexcess_api.repository.AddressRepository;
 import com.z.c.woodexcess_api.repository.MaterialListingRepository;
+import com.z.c.woodexcess_api.repository.UserRepository;
 import com.z.c.woodexcess_api.specification.MaterialListingSpecification;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,26 +31,22 @@ import java.util.UUID;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class MaterialListingService {
 
     private final MaterialListingRepository listingRepository;
     private final AddressRepository addressRepository;
     private final MaterialListingMapper mapper;
-
-    public MaterialListingService(
-            MaterialListingRepository listingRepository,
-            AddressRepository addressRepository,
-            MaterialListingMapper mapper) {
-        this.listingRepository = listingRepository;
-        this.addressRepository = addressRepository;
-        this.mapper = mapper;
-    }
+    private final UserRepository userRepository;
 
     @Transactional
-    public ListingResponse createListing(CreateListingRequest request, User currentUser) {
-        log.info("Creating listing for user: {}", currentUser.getEmail());
+    public ListingResponse createListing(CreateListingRequest request, UUID ownerId) {
+        log.info("Creating listing for user: {}", ownerId);
 
-        if (!currentUser.getIsActive()) {
+        User owner = userRepository.findById(ownerId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + ownerId));
+
+        if (!owner.getIsActive()) {
             throw new BusinessException("Cannot create listing: user account is inactive");
         }
 
@@ -57,7 +55,7 @@ public class MaterialListingService {
             address = addressRepository.findById(request.addressId())
                     .orElseThrow(() -> new AddressNotFoundException(request.addressId()));
 
-            if (!address.getUser().getId().equals(currentUser.getId())) {
+            if (!address.getUser().getId().equals(owner.getId())) {
                 throw new UnauthorizedListingAccessException("Address does not belong to current user");
             }
 
@@ -67,12 +65,12 @@ public class MaterialListingService {
         }
 
         if (address == null) {
-            address = addressRepository.findByUserAndIsActiveAndIsPrimary(currentUser, true, true)
+            address = addressRepository.findByUserAndIsActiveAndIsPrimary(owner, true, true)
                     .orElseThrow(() -> new BusinessException(
                             "User must have at least one active address to create a listing"));
         }
 
-        MaterialListing listing = mapper.toEntity(request, currentUser, address);
+        MaterialListing listing = mapper.toEntity(request, owner, address);
 
         MaterialListing savedListing = listingRepository.save(listing);
 
@@ -81,13 +79,16 @@ public class MaterialListingService {
     }
 
     @Transactional
-    public ListingResponse updateListing(UUID listingId, UpdateListingRequest request, User currentUser) {
-        log.info("Updating listing {} by user: {}", listingId, currentUser.getEmail());
+    public ListingResponse updateListing(UUID listingId, UpdateListingRequest request, UUID ownerId) {
+        log.info("Updating listing {} by user: {}", listingId, ownerId);
+
+        User owner = userRepository.findById(ownerId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + ownerId));
 
         MaterialListing listing = listingRepository.findById(listingId)
                 .orElseThrow(() -> new ListingNotFoundException(listingId));
 
-        validateOwnershipOrAdmin(listing, currentUser);
+        validateOwnershipOrAdmin(listing, owner);
 
         if (request.title() != null) {
             listing.setTitle(request.title());
@@ -127,13 +128,16 @@ public class MaterialListingService {
     }
 
     @Transactional
-    public void deactivateListing(UUID listingId, User currentUser) {
-        log.info("Deactivating listing {} by user: {}", listingId, currentUser.getEmail());
+    public void deactivateListing(UUID listingId, UUID ownerId) {
+        log.info("Deactivating listing {} by user: {}", listingId, ownerId);
+
+        User owner = userRepository.findById(ownerId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + ownerId));
 
         MaterialListing listing = listingRepository.findById(listingId)
                 .orElseThrow(() -> new ListingNotFoundException(listingId));
 
-        validateOwnershipOrAdmin(listing, currentUser);
+        validateOwnershipOrAdmin(listing, owner);
 
         listing.deactivate();
         listingRepository.save(listing);
@@ -168,9 +172,9 @@ public class MaterialListingService {
         return listings.map(mapper::toResponse);
     }
 
-    private void validateOwnershipOrAdmin(MaterialListing listing, User currentUser) {
-        boolean isOwner = listing.isOwnedBy(currentUser.getId());
-        boolean isAdmin = currentUser.getRole() == UserRole.ADMIN;
+    private void validateOwnershipOrAdmin(MaterialListing listing, User owner) {
+        boolean isOwner = listing.isOwnedBy(owner.getId());
+        boolean isAdmin = owner.getRole() == UserRole.ADMIN;
 
         if (!isOwner && !isAdmin) {
             throw new UnauthorizedListingAccessException();

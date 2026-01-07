@@ -22,14 +22,9 @@ public class DotenvConfig implements ApplicationContextInitializer<ConfigurableA
 
         dotenv.entries().forEach(entry -> {
             envMap.put(entry.getKey(), entry.getValue());
-            System.out.println("✅ Loaded: " + entry.getKey() + " = " +
-                    (entry.getKey().contains("PASSWORD") || entry.getKey().contains("SECRET")
-                            ? "***HIDDEN***"
-                            : entry.getValue()));
         });
 
         environment.getPropertySources().addFirst(new MapPropertySource("dotenvProperties", envMap));
 
-        System.out.println("🚀 DotenvConfig initialized with " + envMap.size() + " variables");
     }
 }

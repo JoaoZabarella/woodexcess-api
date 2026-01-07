@@ -6,7 +6,7 @@ import com.z.c.woodexcess_api.dto.auth.RegisterResponse;
 import com.z.c.woodexcess_api.dto.user.UserResponse;
 import com.z.c.woodexcess_api.model.Address;
 import com.z.c.woodexcess_api.model.User;
-import com.z.c.woodexcess_api.enums.UserRole;
+import com.z.c.woodexcess_api.model.enums.UserRole;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -68,6 +68,7 @@ public class UserMapper {
                 user.getName(),
                 user.getEmail(),
                 user.getPhone(),
+                user.getAvatarUrl(),
                 user.getIsActive(),
                 user.getRole(),
                 addressResponses

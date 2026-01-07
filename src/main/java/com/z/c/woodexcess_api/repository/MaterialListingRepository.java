@@ -1,6 +1,6 @@
 package com.z.c.woodexcess_api.repository;
 
-import com.z.c.woodexcess_api.enums.ListingStatus;
+import com.z.c.woodexcess_api.model.enums.ListingStatus;
 import com.z.c.woodexcess_api.model.MaterialListing;
 import com.z.c.woodexcess_api.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;

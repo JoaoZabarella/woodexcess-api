@@ -1,7 +1,7 @@
 package com.z.c.woodexcess_api.service;
 
 import com.z.c.woodexcess_api.dto.auth.TokenRotationResult;
-import com.z.c.woodexcess_api.enums.UserRole;
+import com.z.c.woodexcess_api.model.enums.UserRole;
 import com.z.c.woodexcess_api.exception.auth.RefreshTokenException;
 import com.z.c.woodexcess_api.model.RefreshToken;
 import com.z.c.woodexcess_api.model.User;
@@ -31,15 +31,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-/**
- * Comprehensive unit tests for RefreshTokenService.
- *
- * Test Strategy:
- * - Uses Given-When-Then pattern
- * - Tests behavior, not implementation
- * - Covers happy paths and edge cases
- * - Uses nested classes for logical grouping
- */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("RefreshTokenService")
 class RefreshTokenServiceTest {

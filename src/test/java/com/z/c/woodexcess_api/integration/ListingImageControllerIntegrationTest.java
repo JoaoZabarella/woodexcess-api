@@ -6,8 +6,8 @@ import com.z.c.woodexcess_api.dto.auth.LoginRequest;
 import com.z.c.woodexcess_api.dto.auth.LoginResponse;
 import com.z.c.woodexcess_api.dto.auth.RegisterRequest;
 import com.z.c.woodexcess_api.dto.listing.CreateListingRequest;
-import com.z.c.woodexcess_api.enums.Condition;
-import com.z.c.woodexcess_api.enums.MaterialType;
+import com.z.c.woodexcess_api.model.enums.Condition;
+import com.z.c.woodexcess_api.model.enums.MaterialType;
 import com.z.c.woodexcess_api.processor.ImageProcessor;
 import com.z.c.woodexcess_api.service.storage.S3StorageService;
 import com.z.c.woodexcess_api.validator.ImageValidator;
@@ -28,7 +28,6 @@ import org.springframework.test.web.servlet.MvcResult;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;

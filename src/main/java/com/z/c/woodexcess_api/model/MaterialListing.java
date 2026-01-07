@@ -1,12 +1,14 @@
 package com.z.c.woodexcess_api.model;
 
-import com.z.c.woodexcess_api.enums.Condition;
-import com.z.c.woodexcess_api.enums.ListingStatus;
-import com.z.c.woodexcess_api.enums.MaterialType;
+import com.z.c.woodexcess_api.model.enums.Condition;
+import com.z.c.woodexcess_api.model.enums.ListingStatus;
+import com.z.c.woodexcess_api.model.enums.MaterialType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -38,6 +40,7 @@ public class MaterialListing {
     private String description;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "material_type", nullable = false, length = 50)
     private MaterialType materialType;
 
@@ -55,7 +58,6 @@ public class MaterialListing {
     @JoinColumn(name = "address_id", foreignKey = @ForeignKey(name = "fk_listing_address"))
     private Address address;
 
-    // Denormalized fields for faster filtering
     @Column(name = "city", nullable = false, length = 100)
     private String city;
 

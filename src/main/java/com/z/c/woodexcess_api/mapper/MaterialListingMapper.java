@@ -3,11 +3,13 @@ package com.z.c.woodexcess_api.mapper;
 import com.z.c.woodexcess_api.dto.listing.CreateListingRequest;
 import com.z.c.woodexcess_api.dto.listing.ListingOwerResponse;
 import com.z.c.woodexcess_api.dto.listing.ListingResponse;
-import com.z.c.woodexcess_api.enums.ListingStatus;
+import com.z.c.woodexcess_api.model.enums.ListingStatus;
 import com.z.c.woodexcess_api.model.Address;
 import com.z.c.woodexcess_api.model.MaterialListing;
 import com.z.c.woodexcess_api.model.User;
 import org.springframework.stereotype.Component;
+
+import java.util.UUID;
 
 @Component
 public class MaterialListingMapper {
