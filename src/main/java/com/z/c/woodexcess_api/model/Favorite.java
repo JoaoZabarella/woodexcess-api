@@ -32,7 +32,7 @@ public class Favorite {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "lisitng_id", nullable = false)
+    @JoinColumn(name = "listing_id", nullable = false)
     private MaterialListing listing;
 
     @CreationTimestamp
