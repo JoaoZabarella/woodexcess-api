@@ -6,6 +6,7 @@ import com.z.c.woodexcess_api.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -18,7 +19,9 @@ public interface FavoriteRepository extends JpaRepository<Favorite, UUID> {
 
     boolean existsByUserAndListing(User user, MaterialListing listing);
 
+
     Optional<Favorite> findByUserAndListing(User user, MaterialListing listing);
+
 
     @Query("""
             SELECT f FROM Favorite f
@@ -28,12 +31,15 @@ public interface FavoriteRepository extends JpaRepository<Favorite, UUID> {
             AND l.status = 'ACTIVE'
             ORDER BY f.createdAt DESC            
             """)
-    Page<Favorite> finndByUserOrderByCreatedAtDesc(@Param("user") User user,
-                                                   Pageable page);
+    Page<Favorite> findByUserOrderByCreatedAtDesc(@Param("user") User user, Pageable pageable);
+
 
     long countByListing(MaterialListing listing);
 
+
     long countByUser(User user);
 
+
+    @Modifying
     void deleteByUserAndListing(User user, MaterialListing listing);
 }
