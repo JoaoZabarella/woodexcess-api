@@ -14,10 +14,11 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: none
-    show-sql: false
+    show-sql: true
     properties:
       hibernate:
         format_sql: true
+        use_sql_comments: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
   # Flyway
@@ -119,9 +120,10 @@ websocket:
 logging:
   level:
     root: WARN
-    org.hibernate.SQL: WARN
+    org.hibernate.SQL: DEBUG
     org.springframework: WARN
     org.springframework.security: DEBUG
     com.z.c.woodexcess_api: INFO
     org.testcontainers: INFO
     com.github.dockerjava: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
