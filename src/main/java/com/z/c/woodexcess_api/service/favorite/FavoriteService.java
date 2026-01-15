@@ -46,7 +46,8 @@ public class FavoriteService {
         Favorite saved = favoriteRepository.save(favorite);
         log.info("Favorite added successfully - ID: {}", saved.getId());
 
-        return mapper.toResponse(saved);
+        long totalFavorites = favoriteRepository.countByListing(listing);
+        return mapper.toResponse(saved, totalFavorites);
     }
 
 
@@ -73,7 +74,10 @@ public class FavoriteService {
 
         log.debug("Found {} favorites for user: {}", favorites.getTotalElements(), user.getEmail());
 
-        return favorites.map(mapper::toResponse);
+        return favorites.map(favorite -> {
+            long totalFavorites = favoriteRepository.countByListing(favorite.getListing());
+            return mapper.toResponse(favorite, totalFavorites);
+        });
     }
 
     @Transactional(readOnly = true)

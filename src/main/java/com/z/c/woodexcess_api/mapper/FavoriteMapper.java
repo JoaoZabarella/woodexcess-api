@@ -6,17 +6,12 @@ import com.z.c.woodexcess_api.model.Favorite;
 import com.z.c.woodexcess_api.model.ListingImage;
 import com.z.c.woodexcess_api.model.MaterialListing;
 import com.z.c.woodexcess_api.model.enums.ListingStatus;
-import com.z.c.woodexcess_api.repository.FavoriteRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 public class FavoriteMapper {
 
-    private final FavoriteRepository repository;
-
-    public FavoriteResponse toResponse(Favorite favorite) {
+    public FavoriteResponse toResponse(Favorite favorite, long totalFavorites) {
         MaterialListing listing = favorite.getListing();
 
         String primaryImageUrl = listing.getImages().stream()
@@ -40,7 +35,7 @@ public class FavoriteMapper {
                 primaryImageUrl,
                 listing.getOwner().getName(),
                 listing.getOwner().getId(),
-                repository.countByListing(listing),
+                totalFavorites,
                 listing.getStatus() == ListingStatus.ACTIVE
         );
     }

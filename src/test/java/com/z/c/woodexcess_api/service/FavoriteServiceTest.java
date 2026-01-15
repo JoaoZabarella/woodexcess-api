@@ -114,7 +114,8 @@ class FavoriteServiceTest {
         when(listingRepository.findById(listing.getId())).thenReturn(Optional.of(listing));
         when(favoriteRepository.existsByUserAndListing(user, listing)).thenReturn(false);
         when(favoriteRepository.save(any(Favorite.class))).thenReturn(favorite);
-        when(favoriteMapper.toResponse(favorite)).thenReturn(favoriteResponse);
+        when(favoriteRepository.countByListing(listing)).thenReturn(1L);
+        when(favoriteMapper.toResponse(favorite, 1L)).thenReturn(favoriteResponse);
 
         // Act
         FavoriteResponse response = favoriteService.addFavorite(user, listing.getId());
@@ -123,7 +124,8 @@ class FavoriteServiceTest {
         assertThat(response).isNotNull();
         assertThat(response.listingId()).isEqualTo(listing.getId());
         verify(favoriteRepository, times(1)).save(any(Favorite.class));
-        verify(favoriteMapper, times(1)).toResponse(favorite);
+        verify(favoriteRepository, times(1)).countByListing(listing);
+        verify(favoriteMapper, times(1)).toResponse(favorite, 1L);
     }
 
     @Test
@@ -213,7 +215,8 @@ class FavoriteServiceTest {
         Pageable pageable = PageRequest.of(0, 20);
         Page<Favorite> favoritesPage = new PageImpl<>(List.of(favorite));
         when(favoriteRepository.findByUserOrderByCreatedAtDesc(user, pageable)).thenReturn(favoritesPage);
-        when(favoriteMapper.toResponse(any(Favorite.class))).thenReturn(favoriteResponse);
+        when(favoriteRepository.countByListing(listing)).thenReturn(1L);
+        when(favoriteMapper.toResponse(any(Favorite.class), eq(1L))).thenReturn(favoriteResponse);
 
         // Act
         Page<FavoriteResponse> response = favoriteService.getUserFavorites(user, pageable);
@@ -222,7 +225,8 @@ class FavoriteServiceTest {
         assertThat(response).isNotNull();
         assertThat(response.getContent()).hasSize(1);
         assertThat(response.getContent().get(0).listingId()).isEqualTo(listing.getId());
-        verify(favoriteMapper, times(1)).toResponse(any(Favorite.class));
+        verify(favoriteRepository, times(1)).countByListing(listing);
+        verify(favoriteMapper, times(1)).toResponse(any(Favorite.class), eq(1L));
     }
 
     @Test
