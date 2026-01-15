@@ -11,8 +11,6 @@ import java.util.List;
 import java.util.UUID;
 
 public record CustomUserDetails(User user) implements UserDetails {
-
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(user.getRole().toString()));
@@ -48,10 +46,7 @@ public record CustomUserDetails(User user) implements UserDetails {
         return true;
     }
 
-
     public UUID getId() {
         return user.getId();
     }
-
-
 }
