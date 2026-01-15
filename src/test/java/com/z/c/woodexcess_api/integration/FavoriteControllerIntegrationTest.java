@@ -27,6 +27,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -70,10 +71,17 @@ class FavoriteControllerIntegrationTest {
 
     @BeforeEach
     void setUp() {
+
+        favoriteRepository.deleteAll();
+        listingRepository.deleteAll();
+        userRepository.deleteAll();
+
+        String uniqueId = UUID.randomUUID().toString().substring(0, 8);
+
         // Create buyer
         buyer = User.builder()
                 .name("Buyer User")
-                .email("buyer@test.com")
+                .email("buyer-" + uniqueId + "@test.com")
                 .password(passwordEncoder.encode("Password123!"))
                 .phone("11987654321")
                 .role(UserRole.USER)
@@ -85,7 +93,7 @@ class FavoriteControllerIntegrationTest {
         // Create seller
         seller = User.builder()
                 .name("Seller User")
-                .email("seller@test.com")
+                .email("seller-" + uniqueId + "@test.com")
                 .password(passwordEncoder.encode("Password123!"))
                 .phone("11987654322")
                 .role(UserRole.USER)
