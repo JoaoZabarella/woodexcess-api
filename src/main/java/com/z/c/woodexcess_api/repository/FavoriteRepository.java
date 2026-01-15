@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -47,7 +48,7 @@ public interface FavoriteRepository extends JpaRepository<Favorite, UUID> {
             WHERE l.id IN :listingIds 
             GROUP BY l.id
             """)
-    java.util.List<Object[]> countByListingIds(@Param("listingIds") java.util.List<UUID> listingIds);
+    List<Object[]> countByListingIds(@Param("listingIds") List<UUID> listingIds);
 
 
     @Modifying

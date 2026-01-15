@@ -18,7 +18,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -75,16 +78,21 @@ public class FavoriteService {
         log.debug("Found {} favorites for user: {}", favorites.getTotalElements(), user.getEmail());
 
         // Batch fetch favorite counts to avoid N+1 query problem
-        java.util.List<UUID> listingIds = favorites.stream()
+        List<UUID> listingIds = favorites.stream()
                 .map(favorite -> favorite.getListing().getId())
                 .toList();
         
-        java.util.Map<UUID, Long> favoriteCounts = favoriteRepository.countByListingIds(listingIds)
-                .stream()
-                .collect(java.util.stream.Collectors.toMap(
-                        arr -> (UUID) arr[0],
-                        arr -> (Long) arr[1]
-                ));
+        Map<UUID, Long> favoriteCounts;
+        if (listingIds.isEmpty()) {
+            favoriteCounts = Map.of();
+        } else {
+            favoriteCounts = favoriteRepository.countByListingIds(listingIds)
+                    .stream()
+                    .collect(Collectors.toMap(
+                            arr -> (UUID) arr[0],
+                            arr -> (Long) arr[1]
+                    ));
+        }
 
         return favorites.map(favorite -> {
             long totalFavorites = favoriteCounts.getOrDefault(favorite.getListing().getId(), 0L);
