@@ -129,7 +129,7 @@ public class FavoriteController {
             @Parameter(hidden = true)
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        FavoriteStatsResponse stats = service.getListingStats(listingId, userDetails.user());
+        FavoriteStatsResponse stats = service.getListingStats(userDetails.user(), listingId);
         return ResponseEntity.ok(stats);
     }
 
@@ -146,7 +146,7 @@ public class FavoriteController {
             @Parameter(hidden = true)
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        long count = service.getUserFavoriteCount(userDetails.user());
+        long count = service.getUserFavoritesCount(userDetails.user());
         return ResponseEntity.ok(count);
     }
 }
