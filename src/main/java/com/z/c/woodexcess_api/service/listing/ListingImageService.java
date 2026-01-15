@@ -12,6 +12,7 @@ import com.z.c.woodexcess_api.repository.MaterialListingRepository;
 import com.z.c.woodexcess_api.service.storage.StorageService;
 import com.z.c.woodexcess_api.util.FileUtils;
 import com.z.c.woodexcess_api.validator.ImageValidator;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +26,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class ListingImageService {
 
@@ -37,21 +39,6 @@ public class ListingImageService {
 
     @Value("${app.listing.max-images:10}")
     private int maxImages;
-
-    public ListingImageService(
-            ListingImageRepository imageRepository,
-            MaterialListingRepository listingRepository,
-            StorageService storageService,
-            ImageValidator imageValidator,
-            ImageProcessor imageProcessor,
-            ImageMapper imageMapper) {
-        this.imageRepository = imageRepository;
-        this.listingRepository = listingRepository;
-        this.storageService = storageService;
-        this.imageValidator = imageValidator;
-        this.imageProcessor = imageProcessor;
-        this.imageMapper = imageMapper;
-    }
 
     @Transactional
     public ImageResponse addImage(UUID listingId, MultipartFile file, Boolean isPrimary) {
