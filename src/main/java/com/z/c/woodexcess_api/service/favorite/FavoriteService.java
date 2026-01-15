@@ -74,8 +74,20 @@ public class FavoriteService {
 
         log.debug("Found {} favorites for user: {}", favorites.getTotalElements(), user.getEmail());
 
+        // Batch fetch favorite counts to avoid N+1 query problem
+        java.util.List<UUID> listingIds = favorites.stream()
+                .map(favorite -> favorite.getListing().getId())
+                .toList();
+        
+        java.util.Map<UUID, Long> favoriteCounts = favoriteRepository.countByListingIds(listingIds)
+                .stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        arr -> (UUID) arr[0],
+                        arr -> (Long) arr[1]
+                ));
+
         return favorites.map(favorite -> {
-            long totalFavorites = favoriteRepository.countByListing(favorite.getListing());
+            long totalFavorites = favoriteCounts.getOrDefault(favorite.getListing().getId(), 0L);
             return mapper.toResponse(favorite, totalFavorites);
         });
     }

@@ -214,8 +214,11 @@ class FavoriteServiceTest {
         // Arrange
         Pageable pageable = PageRequest.of(0, 20);
         Page<Favorite> favoritesPage = new PageImpl<>(List.of(favorite));
+        java.util.List<Object[]> countsResult = new ArrayList<>();
+        countsResult.add(new Object[]{listing.getId(), 1L});
+        
         when(favoriteRepository.findByUserOrderByCreatedAtDesc(user, pageable)).thenReturn(favoritesPage);
-        when(favoriteRepository.countByListing(listing)).thenReturn(1L);
+        when(favoriteRepository.countByListingIds(List.of(listing.getId()))).thenReturn(countsResult);
         when(favoriteMapper.toResponse(any(Favorite.class), eq(1L))).thenReturn(favoriteResponse);
 
         // Act
@@ -225,7 +228,7 @@ class FavoriteServiceTest {
         assertThat(response).isNotNull();
         assertThat(response.getContent()).hasSize(1);
         assertThat(response.getContent().get(0).listingId()).isEqualTo(listing.getId());
-        verify(favoriteRepository, times(1)).countByListing(listing);
+        verify(favoriteRepository, times(1)).countByListingIds(List.of(listing.getId()));
         verify(favoriteMapper, times(1)).toResponse(any(Favorite.class), eq(1L));
     }
 

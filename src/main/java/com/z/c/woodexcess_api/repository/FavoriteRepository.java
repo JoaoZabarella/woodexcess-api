@@ -40,6 +40,16 @@ public interface FavoriteRepository extends JpaRepository<Favorite, UUID> {
     long countByUser(User user);
 
 
+    @Query("""
+            SELECT l.id, COUNT(f) 
+            FROM Favorite f 
+            JOIN f.listing l 
+            WHERE l.id IN :listingIds 
+            GROUP BY l.id
+            """)
+    java.util.List<Object[]> countByListingIds(@Param("listingIds") java.util.List<UUID> listingIds);
+
+
     @Modifying
     void deleteByUserAndListing(User user, MaterialListing listing);
 }
